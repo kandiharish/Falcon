@@ -1,0 +1,25 @@
+# --- Secrets: NEVER commit these ---
+.env
+.env.*
+!.env.example
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# --- Node / frontend ---
+node_modules/
+dist/
+*.tsbuildinfo
+
+# --- Local evidence files (uploaded during development) ---
+storage/
+
+# --- Logs & OS noise ---
+*.log
+.DS_Store
+Thumbs.db

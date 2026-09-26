@@ -1,0 +1,14 @@
+# Store all text files with LF line endings (Linux/Docker style),
+# so scripts copied into containers never break on Windows "\r\n".
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+
+# Binary files: never touch
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
+*.mp4 binary
