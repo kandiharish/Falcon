@@ -18,6 +18,7 @@ import {
   Waypoints,
   type LucideIcon,
 } from 'lucide-react'
+import type { Permission } from '@/domain/types'
 
 export interface NavItem {
   id: string
@@ -26,6 +27,8 @@ export interface NavItem {
   icon: LucideIcon
   /** The roadmap phase that delivers this module. */
   phase: number
+  /** Permission needed to see this module (none = every signed-in user). */
+  permission?: Permission
   summary: string
   capabilities: string[]
 }
@@ -50,6 +53,7 @@ export const navigation: NavGroup[] = [
       },
       {
         id: 'investigations',
+        permission: 'investigation:read',
         label: 'Investigations',
         path: '/investigations',
         icon: FolderSearch,
@@ -68,6 +72,7 @@ export const navigation: NavGroup[] = [
     items: [
       {
         id: 'evidence',
+        permission: 'evidence:read',
         label: 'Evidence',
         path: '/evidence',
         icon: FileStack,
@@ -81,6 +86,7 @@ export const navigation: NavGroup[] = [
       },
       {
         id: 'entities',
+        permission: 'evidence:read',
         label: 'Entities',
         path: '/entities',
         icon: UserRoundSearch,
@@ -94,6 +100,7 @@ export const navigation: NavGroup[] = [
       },
       {
         id: 'events',
+        permission: 'evidence:read',
         label: 'Events',
         path: '/events',
         icon: Activity,
@@ -111,6 +118,7 @@ export const navigation: NavGroup[] = [
     items: [
       {
         id: 'timeline',
+        permission: 'evidence:read',
         label: 'Timeline',
         path: '/timeline',
         icon: ChartGantt,
@@ -123,6 +131,7 @@ export const navigation: NavGroup[] = [
       },
       {
         id: 'correlations',
+        permission: 'evidence:read',
         label: 'Correlations',
         path: '/correlations',
         icon: Waypoints,
@@ -136,6 +145,7 @@ export const navigation: NavGroup[] = [
       },
       {
         id: 'graph',
+        permission: 'evidence:read',
         label: 'Relationship Graph',
         path: '/graph',
         icon: Network,
@@ -149,6 +159,7 @@ export const navigation: NavGroup[] = [
       },
       {
         id: 'analysis',
+        permission: 'evidence:read',
         label: 'Analysis',
         path: '/analysis',
         icon: Microscope,
@@ -167,6 +178,7 @@ export const navigation: NavGroup[] = [
     items: [
       {
         id: 'reports',
+        permission: 'investigation:read',
         label: 'Reports',
         path: '/reports',
         icon: FileText,
@@ -176,6 +188,7 @@ export const navigation: NavGroup[] = [
       },
       {
         id: 'tasks',
+        permission: 'investigation:read',
         label: 'Tasks',
         path: '/tasks',
         icon: ListChecks,
@@ -190,6 +203,7 @@ export const navigation: NavGroup[] = [
     items: [
       {
         id: 'audit',
+        permission: 'audit:read',
         label: 'Audit Logs',
         path: '/audit',
         icon: ScrollText,
@@ -199,6 +213,7 @@ export const navigation: NavGroup[] = [
       },
       {
         id: 'admin',
+        permission: 'users:read',
         label: 'Administration',
         path: '/admin',
         icon: Settings,
@@ -209,6 +224,16 @@ export const navigation: NavGroup[] = [
     ],
   },
 ]
+
+/** Modules the current user may see. */
+export function visibleNavigation(permissions: readonly Permission[]): NavGroup[] {
+  return navigation
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => !item.permission || permissions.includes(item.permission)),
+    }))
+    .filter((group) => group.items.length > 0)
+}
 
 export const allNavItems: NavItem[] = navigation.flatMap((group) => group.items)
 

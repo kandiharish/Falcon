@@ -17,7 +17,8 @@ phase-by-phase learning notes are in [docs/learning/](docs/learning/).
 | P0 Project setup (Git, Docker, PostgreSQL + PostGIS + pgvector) | ✅ |
 | P1 Skeleton (browser ↔ API ↔ database) | ✅ |
 | P2 Design system + application shell | ✅ |
-| P3 Authentication + roles | next |
+| P3 Authentication, roles, audit foundation | ✅ |
+| P4 Investigations + database domain model | next |
 
 ## Prerequisites
 
@@ -40,6 +41,14 @@ The database listens on `127.0.0.1:5434` (see `POSTGRES_PORT` in `.env`).
 docker compose up -d                                          # 1. database
 cd backend  && uv run uvicorn app.main:app --reload --port 8010   # 2. API
 cd frontend && npm install && npm run dev                     # 3. web app
+```
+
+First time only — create the tables and the fictional demo users:
+
+```sh
+cd backend
+uv run alembic upgrade head                    # create/upgrade database tables
+uv run python -m app.scripts.seed_demo_users   # password = DEMO_PASSWORD in .env
 ```
 
 Open http://localhost:5190. API docs: http://localhost:8010/api/docs

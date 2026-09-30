@@ -66,9 +66,39 @@ export type Role =
   | 'supervisor'
   | 'system_admin'
 
+/** Permission strings checked by the API (backend/app/security/permissions.py). */
+export type Permission =
+  | 'investigation:read'
+  | 'investigation:write'
+  | 'evidence:read'
+  | 'evidence:upload'
+  | 'evidence:verify'
+  | 'correlation:review'
+  | 'report:generate'
+  | 'task:manage'
+  | 'audit:read'
+  | 'users:read'
+  | 'users:manage'
+  | 'settings:manage'
+
 export interface CurrentUser {
   id: string
-  displayName: string
   email: string
+  displayName: string
   role: Role
+  permissions: Permission[]
+  mfaEnabled: boolean
+  sessionExpiresAt: string // ISO 8601
+}
+
+export interface UserSummary {
+  id: string
+  email: string
+  displayName: string
+  role: Role
+  isActive: boolean
+  mfaEnabled: boolean
+  locked: boolean
+  lastLoginAt: string | null
+  createdAt: string
 }

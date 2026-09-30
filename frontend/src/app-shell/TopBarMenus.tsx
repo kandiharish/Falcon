@@ -1,4 +1,4 @@
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { Bell, BookOpen, CircleHelp, Keyboard, LogOut, Monitor, Moon, Palette, Sun } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -15,7 +15,7 @@ import {
 import { Kbd } from '@/components/ui/kbd'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useTheme, type ThemePreference } from '@/app/theme'
-import { useCurrentUser } from '@/services/queries'
+import { useCurrentUser, useLogout } from '@/services/queries'
 import { roleLabels } from '@/design-system/vocabulary'
 
 export function NotificationsMenu() {
@@ -88,6 +88,8 @@ const themeOptions: { value: ThemePreference; label: string; icon: typeof Sun }[
 export function UserMenu() {
   const { data: user, isPending } = useCurrentUser()
   const { preference, setPreference } = useTheme()
+  const logout = useLogout()
+  const navigate = useNavigate()
 
   if (isPending || !user) return <Skeleton className="size-8 rounded-full" />
 
@@ -134,8 +136,11 @@ export function UserMenu() {
           ))}
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem disabled>
-          <LogOut /> Sign out (Phase 3)
+        <DropdownMenuItem
+          disabled={logout.isPending}
+          onSelect={() => logout.mutate(undefined, { onSettled: () => navigate('/login') })}
+        >
+          <LogOut /> {logout.isPending ? 'Signing out…' : 'Sign out'}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

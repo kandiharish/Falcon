@@ -1,4 +1,4 @@
-import { ArrowRight, FolderSearch, Info } from 'lucide-react'
+import { ArrowRight, FolderSearch, Info, Settings } from 'lucide-react'
 import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,7 +12,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useInvestigationContext } from '@/app/investigation-context'
-import { useInvestigation, useInvestigations } from '@/services/queries'
+import { can } from '@/services/authService'
+import { useCurrentUser, useInvestigation, useInvestigations } from '@/services/queries'
 import type { WorkflowStage } from '@/domain/types'
 import { PriorityBadge, StatusBadge } from '@/design-system/badges'
 import { IdTag } from '@/design-system/IdTag'
@@ -35,6 +36,10 @@ const nextStepByStage: Record<WorkflowStage, string> = {
 
 export function OverviewPage() {
   const currentId = useInvestigationContext((s) => s.currentInvestigationId)
+  const { data: user } = useCurrentUser()
+
+  // Roles without case access (e.g. system administrator) get a system-focused overview.
+  if (!can(user, 'investigation:read')) return <SystemOverview />
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -57,6 +62,36 @@ export function OverviewPage() {
       </div>
 
       <InvestigationsTable />
+    </div>
+  )
+}
+
+function SystemOverview() {
+  const { data: user } = useCurrentUser()
+  return (
+    <div className="mx-auto max-w-7xl space-y-6">
+      <PageHeader
+        title="System overview"
+        description="Your role manages the FALCON platform. Investigation data is not visible to this role."
+      />
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Administration</CardTitle>
+            <CardDescription>Manage who can access FALCON and what each role may do.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2">
+            {can(user, 'users:read') && (
+              <Button asChild variant="outline">
+                <Link to="/admin">
+                  <Settings /> Users and roles
+                </Link>
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+        <SystemStatusCard />
+      </div>
     </div>
   )
 }

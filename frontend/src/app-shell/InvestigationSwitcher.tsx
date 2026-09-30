@@ -10,15 +10,19 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useInvestigationContext } from '@/app/investigation-context'
-import { useInvestigations } from '@/services/queries'
+import { can } from '@/services/authService'
+import { useCurrentUser, useInvestigations } from '@/services/queries'
 import { StatusBadge } from '@/design-system/badges'
 
 /** "Current Investigation" selector in the top bar (plan §7). */
 export function InvestigationSwitcher() {
-  const { data: investigations, isPending } = useInvestigations()
+  const { data: user } = useCurrentUser()
+  const allowed = can(user, 'investigation:read')
+  const { data: investigations, isPending } = useInvestigations(allowed)
   const { currentInvestigationId, setCurrentInvestigation } = useInvestigationContext()
   const current = investigations?.find((i) => i.id === currentInvestigationId)
 
+  if (!allowed) return null
   if (isPending) return <Skeleton className="h-8 w-56" />
 
   return (

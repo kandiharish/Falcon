@@ -25,6 +25,18 @@ class Settings(BaseSettings):
     postgres_user: str
     postgres_password: SecretStr  # SecretStr hides the value in logs and error messages
 
+    # --- Sessions & login protection ---
+    session_cookie_name: str = "falcon_session"
+    # Secure cookies are only sent over HTTPS. Local development uses plain HTTP.
+    session_cookie_secure: bool = False
+    session_hours: int = 8  # a normal sign-in lasts one work shift
+    session_remember_days: int = 7  # "Remember this device"
+    login_max_failures: int = 5
+    login_lockout_minutes: int = 15
+
+    # Password for the fictional demo users created by the seed script (development only)
+    demo_password: SecretStr | None = None
+
     @property
     def database_url(self) -> str:
         password = self.postgres_password.get_secret_value()

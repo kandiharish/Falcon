@@ -1,7 +1,8 @@
 import { MapPin, UserRound } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useInvestigationContext } from '@/app/investigation-context'
-import { useInvestigation } from '@/services/queries'
+import { can } from '@/services/authService'
+import { useCurrentUser, useInvestigation } from '@/services/queries'
 import { PriorityBadge, StatusBadge } from '@/design-system/badges'
 import { IdTag } from '@/design-system/IdTag'
 import { WorkflowStepper } from '@/design-system/WorkflowStepper'
@@ -10,10 +11,12 @@ import { WorkflowStepper } from '@/design-system/WorkflowStepper'
  * Always-visible strip: CURRENT INVESTIGATION + where it is in the workflow (plan §7, §44).
  */
 export function InvestigationContextBar() {
+  const { data: user } = useCurrentUser()
+  const allowed = can(user, 'investigation:read')
   const currentId = useInvestigationContext((s) => s.currentInvestigationId)
-  const { data: investigation, isPending } = useInvestigation(currentId)
+  const { data: investigation, isPending } = useInvestigation(allowed ? currentId : null)
 
-  if (!currentId) return null
+  if (!allowed || !currentId) return null
 
   return (
     <div className="border-b bg-card/60 px-4 py-2 lg:px-6">

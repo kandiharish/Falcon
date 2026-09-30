@@ -41,8 +41,8 @@ Legend: ✅ in use now · 🔜 planned (phase)
 | Geist + JetBrains Mono | — | ✅ P2 | Fonts (sans + mono for IDs) | Self-hosted via @fontsource: no Google Fonts request. |
 | oxlint | 1.x | ✅ P1 | Linter | Very fast Rust-based linter shipped with the Vite template. |
 | TanStack Table + Virtual | — | 🔜 P4–P5 | Large data tables | Renders only visible rows (thousands of evidence items). |
-| React Hook Form + Zod | — | 🔜 P3 | Forms + validation | One schema = type + runtime validation. |
-| openapi-typescript | — | 🔜 P3 | Generate TS types from the API | Frontend and backend types can never drift apart. |
+| React Hook Form + Zod | 7 / 4 | ✅ P3 | Forms + validation | One schema = type + runtime validation. |
+| openapi-typescript | — | 🔜 P4 | Generate TS types from the API | Frontend and backend types can never drift apart. |
 | Recharts | — | 🔜 P11 | Dashboard charts | Simple, good for aggregate statistics. |
 | vis-timeline | — | 🔜 P7 | Zoomable timeline | Built-in zoom, grouping, ranges. |
 | Leaflet + OpenStreetMap | — | 🔜 P7 | Maps | Free, no API key. Google Maps requires billing. |
@@ -61,9 +61,10 @@ Legend: ✅ in use now · 🔜 planned (phase)
 | psycopg | 3 | ✅ P1 | PostgreSQL driver | Modern, maintained. |
 | pytest + httpx2 | — | ✅ P1 | Backend tests | Standard Python testing. |
 | Ruff | 0.16 | ✅ P1 | Lint + format | One fast tool replaces flake8 + isort + black. |
-| Alembic | — | 🔜 P4 | Database migrations | Version control for the database structure. |
-| argon2-cffi | — | 🔜 P3 | Password hashing | Current best practice (Argon2id). |
-| pyotp | — | 🔜 P3 | TOTP multi-factor codes | Works with any authenticator app. |
+| Alembic | 1.x | ✅ P3 | Database migrations | Version control for the database structure; migrations also build the test database. |
+| argon2-cffi | — | ✅ P3 | Password hashing | Current best practice (Argon2id), OWASP-recommended. |
+| pyotp | — | 🔜 P11 | TOTP multi-factor codes | Works with any authenticator app. The user table is already MFA-ready. |
+| Server-side sessions (httpOnly cookie) | — | ✅ P3 | Sign-in state | Revocable instantly; the database stores only a SHA-256 hash of each token. Chosen over JWT, which cannot be revoked before it expires. |
 | Postgres job queue (`FOR UPDATE SKIP LOCKED`) | — | 🔜 P5 | Background processing | The ProcessingJob table *is* the queue — no Redis/Celery to run. |
 
 ## 3. Data & infrastructure

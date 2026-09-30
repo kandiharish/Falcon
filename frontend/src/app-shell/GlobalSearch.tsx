@@ -13,9 +13,10 @@ import {
   CommandSeparator,
 } from '@/components/ui/command'
 import { Kbd, KbdGroup } from '@/components/ui/kbd'
-import { navigation } from '@/app/navigation'
+import { visibleNavigation } from '@/app/navigation'
 import { useInvestigationContext } from '@/app/investigation-context'
-import { useInvestigations } from '@/services/queries'
+import { can } from '@/services/authService'
+import { useCurrentUser, useInvestigations } from '@/services/queries'
 
 /**
  * Global search (plan §28), opened with Ctrl+K / ⌘K.
@@ -24,7 +25,9 @@ import { useInvestigations } from '@/services/queries'
 export function GlobalSearch() {
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
-  const { data: investigations } = useInvestigations()
+  const { data: user } = useCurrentUser()
+  const canSeeInvestigations = can(user, 'investigation:read')
+  const { data: investigations } = useInvestigations(canSeeInvestigations)
   const setCurrentInvestigation = useInvestigationContext((s) => s.setCurrentInvestigation)
 
   useEffect(() => {
@@ -52,7 +55,7 @@ export function GlobalSearch() {
         className="size-8 p-0 font-normal text-muted-foreground sm:h-8 sm:w-full sm:max-w-sm sm:justify-start sm:gap-2 sm:px-2.5"
       >
         <Search />
-        <span className="hidden flex-1 text-left sm:inline">Search investigations, modules…</span>
+        <span className="hidden flex-1 text-left sm:inline">Search FALCON…</span>
         <KbdGroup className="hidden sm:inline-flex">
           <Kbd>Ctrl</Kbd>
           <Kbd>K</Kbd>
@@ -69,24 +72,28 @@ export function GlobalSearch() {
             <CommandEmpty>
               No matches. Full search across evidence, entities and events arrives in Phase 11.
             </CommandEmpty>
-            <CommandGroup heading="Investigations">
-              {investigations?.map((investigation) => (
-                <CommandItem
-                  key={investigation.id}
-                  value={`${investigation.id} ${investigation.title}`}
-                  onSelect={() => {
-                    setCurrentInvestigation(investigation.id)
-                    go('/')
-                  }}
-                >
-                  <FolderSearch />
-                  <span className="font-mono text-xs">{investigation.id}</span>
-                  <span className="truncate">{investigation.title}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-            <CommandSeparator />
-            {navigation.map((group) => (
+            {canSeeInvestigations && (
+              <>
+                <CommandGroup heading="Investigations">
+                  {investigations?.map((investigation) => (
+                    <CommandItem
+                      key={investigation.id}
+                      value={`${investigation.id} ${investigation.title}`}
+                      onSelect={() => {
+                        setCurrentInvestigation(investigation.id)
+                        go('/')
+                      }}
+                    >
+                      <FolderSearch />
+                      <span className="font-mono text-xs">{investigation.id}</span>
+                      <span className="truncate">{investigation.title}</span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+                <CommandSeparator />
+              </>
+            )}
+            {visibleNavigation(user?.permissions ?? []).map((group) => (
               <CommandGroup key={group.label} heading={group.label}>
                 {group.items.map((item) => {
                   const Icon = item.icon

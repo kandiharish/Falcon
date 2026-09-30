@@ -13,14 +13,17 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar'
-import { findNavItem, navigation } from '@/app/navigation'
+import { findNavItem, visibleNavigation } from '@/app/navigation'
+import { useCurrentUser } from '@/services/queries'
 import { FalconMark } from './FalconMark'
 
-const CURRENT_PHASE = 2
+const CURRENT_PHASE = 3
 
 export function AppSidebar() {
   const { pathname } = useLocation()
   const active = findNavItem(pathname)
+  const { data: user } = useCurrentUser()
+  const groups = visibleNavigation(user?.permissions ?? [])
 
   return (
     <Sidebar collapsible="icon">
@@ -39,7 +42,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {navigation.map((group) => (
+        {groups.map((group) => (
           <SidebarGroup key={group.label}>
             <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
             <SidebarMenu>

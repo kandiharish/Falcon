@@ -1,9 +1,9 @@
 /**
  * Fictional demonstration data (plan §32). No real people, places or cases.
  * Lives ONLY here, behind the services — UI components never import this file.
- * Replaced by the real API in Phase 3 (user) and Phase 4 (investigations).
+ * Replaced by the real API in Phase 4.
  */
-import type { CurrentUser, InvestigationSummary } from '@/domain/types'
+import type { InvestigationSummary } from '@/domain/types'
 
 export const MOCK_INVESTIGATIONS: InvestigationSummary[] = [
   {
@@ -62,10 +62,3 @@ export const MOCK_INVESTIGATIONS: InvestigationSummary[] = [
     updatedAt: '2026-08-14T15:30:00Z',
   },
 ]
-
-export const MOCK_CURRENT_USER: CurrentUser = {
-  id: 'U-0007',
-  displayName: 'A. Kumar',
-  email: 'a.kumar@falcon.example',
-  role: 'forensic_analyst',
-}
