@@ -24,10 +24,28 @@ docker compose ps           # "db" should show (healthy)
 
 The database listens on `127.0.0.1:5434` (see `POSTGRES_PORT` in `.env`).
 
+## Run the app (three terminals)
+
+```sh
+docker compose up -d                                          # 1. database
+cd backend  && uv run uvicorn app.main:app --reload --port 8010   # 2. API
+cd frontend && npm install && npm run dev                     # 3. web app
+```
+
+Open http://localhost:5190 and press **Check system**. API docs: http://localhost:8010/api/docs
+
+| Service  | Port | Notes |
+|----------|------|-------|
+| Frontend | 5190 | Vite dev server; proxies `/api` to the backend |
+| Backend  | 8010 | FastAPI |
+| Database | 5434 | PostgreSQL in Docker |
+
 ## Project layout
 
 ```
 falcon/
+├── backend/            FastAPI API (Python, uv)
+├── frontend/           React + TypeScript web app (Vite)
 ├── infra/postgres/     database image (Dockerfile) + first-run SQL
 ├── docs/learning/      learning notes per phase
 ├── docker-compose.yml  local services

@@ -19,6 +19,9 @@ dist/
 # --- Local evidence files (uploaded during development) ---
 storage/
 
+# --- Browser-automation scratch files ---
+.playwright-mcp/
+
 # --- Logs & OS noise ---
 *.log
 .DS_Store
