@@ -7,7 +7,17 @@ keeping the investigator in control.
 > Store → Extract → Connect → Explain
 
 This is a learning project. The product specification is in [plan.md](plan.md);
+the full technology stack (including every AI model) is in [docs/TECH_STACK.md](docs/TECH_STACK.md);
 phase-by-phase learning notes are in [docs/learning/](docs/learning/).
+
+## Progress
+
+| Phase | Status |
+|---|---|
+| P0 Project setup (Git, Docker, PostgreSQL + PostGIS + pgvector) | ✅ |
+| P1 Skeleton (browser ↔ API ↔ database) | ✅ |
+| P2 Design system + application shell | ✅ |
+| P3 Authentication + roles | next |
 
 ## Prerequisites
 
@@ -32,7 +42,7 @@ cd backend  && uv run uvicorn app.main:app --reload --port 8010   # 2. API
 cd frontend && npm install && npm run dev                     # 3. web app
 ```
 
-Open http://localhost:5190 and press **Check system**. API docs: http://localhost:8010/api/docs
+Open http://localhost:5190. API docs: http://localhost:8010/api/docs
 
 | Service  | Port | Notes |
 |----------|------|-------|

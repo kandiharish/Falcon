@@ -16,7 +16,13 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* Imports like "@/components/ui/button" point into src/ */
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
     /* Linting */
+    "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
