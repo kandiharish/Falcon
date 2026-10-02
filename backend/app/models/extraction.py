@@ -28,7 +28,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.models.evidence import Evidence
-from app.models.investigation import _in
+from app.models.investigation import Investigation, _in
 
 ENTITY_TYPES = (
     "person",
@@ -88,6 +88,7 @@ class Entity(Base):
     )  # None = automatic
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
+    investigation: Mapped[Investigation] = relationship()
     mentions: Mapped[list["EntityMention"]] = relationship(
         back_populates="entity", cascade="all, delete-orphan"
     )
@@ -164,6 +165,7 @@ class Event(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     evidence: Mapped[Evidence] = relationship()
+    investigation: Mapped[Investigation] = relationship()
     participants: Mapped[list["EventParticipant"]] = relationship(
         back_populates="event", cascade="all, delete-orphan"
     )

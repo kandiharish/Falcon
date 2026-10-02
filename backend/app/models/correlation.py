@@ -25,7 +25,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.models.evidence import Evidence
-from app.models.investigation import _in
+from app.models.investigation import Investigation, _in
 from app.models.user import User
 
 LEVELS = ("high", "medium", "low")
@@ -76,3 +76,4 @@ class Correlation(Base):
     evidence_a: Mapped[Evidence] = relationship(foreign_keys=[evidence_a_id])
     evidence_b: Mapped[Evidence] = relationship(foreign_keys=[evidence_b_id])
     reviewed_by: Mapped[User | None] = relationship()
+    investigation: Mapped[Investigation] = relationship()

@@ -1,4 +1,4 @@
-import { ArrowRight, FolderSearch, Info, Settings } from 'lucide-react'
+import { ArrowRight, FolderSearch, Settings } from 'lucide-react'
 import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/table'
 import { useInvestigationContext } from '@/app/investigation-context'
 import { can } from '@/services/authService'
-import { useCurrentUser, useInvestigation, useInvestigations } from '@/services/queries'
+import { useCurrentUser, useDashboard, useInvestigation, useInvestigations } from '@/services/queries'
 import type { WorkflowStage } from '@/domain/types'
 import { PriorityBadge, StatusBadge } from '@/design-system/badges'
 import { IdTag } from '@/design-system/IdTag'
@@ -23,6 +23,18 @@ import { WorkflowStepper } from '@/design-system/WorkflowStepper'
 import { formatDateTime } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { SystemStatusCard } from './SystemStatusCard'
+import {
+  ActivityFeed,
+  AlertsList,
+  BarList,
+  ColumnChart,
+  MetricTiles,
+  MyTasks,
+  Panel,
+  PendingReviews,
+  RecentEvidence,
+} from './DashboardSections'
+import { sourceItems, statusItems } from './dashboardItems'
 
 const nextStepByStage: Record<WorkflowStage, string> = {
   intake: 'Add and validate evidence for this investigation.',
@@ -41,27 +53,63 @@ export function OverviewPage() {
   // Roles without case access (e.g. system administrator) get a system-focused overview.
   if (!can(user, 'investigation:read')) return <SystemOverview />
 
+  return <CommandCenter currentId={currentId} />
+}
+
+function CommandCenter({ currentId }: { currentId: string | null }) {
+  const { data, isPending, isError, refetch, isFetching } = useDashboard(true)
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHeader
-        title="Investigation overview"
-        description="Understand the state of the current investigation within seconds."
+        title="Command center"
+        description="Across the investigations you work on: what is happening, what needs review, and what is assigned to you. All case data is fictional demonstration data."
       />
-
-      <div className="flex items-start gap-2 rounded-lg border border-info/25 bg-info/5 px-3 py-2 text-sm">
-        <Info aria-hidden className="mt-0.5 size-4 shrink-0 text-info" />
-        <p className="text-muted-foreground">
-          Evidence, entity, event and correlation metrics appear here as those modules are built
-          (Phase 5 onward). All case data shown is fictional demonstration data.
-        </p>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        <CurrentInvestigationCard id={currentId} className="lg:col-span-2" />
-        <SystemStatusCard />
-      </div>
-
-      <InvestigationsTable />
+      {isError ? (
+        <ErrorState description="The dashboard could not be loaded." onRetry={() => refetch()} retrying={isFetching} />
+      ) : isPending ? (
+        <Skeleton className="h-40 w-full" />
+      ) : (
+        <>
+          <MetricTiles metrics={data.metrics} />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <CurrentInvestigationCard id={currentId} className="lg:col-span-2" />
+            <Panel title="Needs attention" description="Failures, integrity problems and overdue tasks.">
+              <AlertsList alerts={data.alerts} />
+            </Panel>
+          </div>
+          <div className="grid gap-6 lg:grid-cols-3">
+            <Panel className="lg:col-span-2" title="Event activity"
+              description={data.event_activity.unit === 'hour' ? 'Events per hour across your investigations (your local time).' : 'Events per day across your investigations.'}>
+              <ColumnChart buckets={data.event_activity.buckets} unit={data.event_activity.unit as 'hour' | 'day'} label="Events over time" />
+            </Panel>
+            <Panel title="Evidence sources">
+              <div className="space-y-5">
+                <BarList items={sourceItems(data.evidence_by_type)} empty="No evidence yet." />
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Processing status</p>
+                  <BarList items={statusItems(data.evidence_by_status)} tone="success" empty="No evidence yet." />
+                </div>
+              </div>
+            </Panel>
+          </div>
+          <div className="grid gap-6 lg:grid-cols-3">
+            <Panel title="Pending reviews" description="Potential relationships, strongest first.">
+              <PendingReviews items={data.pending_correlations} />
+              {Object.keys(data.correlations_by_level).length > 0 && (
+                <div className="mt-4 border-t pt-3">
+                  <BarList tone="signal" empty="" items={['high', 'medium', 'low'].filter((l) => data.correlations_by_level[l]).map((l) => ({ label: `${l[0].toUpperCase()}${l.slice(1)}`, value: data.correlations_by_level[l] }))} />
+                </div>
+              )}
+            </Panel>
+            <Panel title="Assigned to you"><MyTasks items={data.my_tasks} /></Panel>
+            <Panel title="Recent evidence"><RecentEvidence items={data.recent_evidence} /></Panel>
+          </div>
+          <div className="grid gap-6 lg:grid-cols-3">
+            <InvestigationsTable className="lg:col-span-2" />
+            <Panel title="Investigation activity" description="Recorded actions, from the audit log."><ActivityFeed entries={data.activity} days={data.activity_by_day} /></Panel>
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -178,13 +226,13 @@ function Detail({ label, children }: { label: string; children: React.ReactNode 
   )
 }
 
-function InvestigationsTable() {
+function InvestigationsTable({ className }: { className?: string }) {
   const { data: page, isPending } = useInvestigations({ limit: 10 })
   const investigations = page?.items
   const { currentInvestigationId, setCurrentInvestigation } = useInvestigationContext()
 
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <CardTitle>Investigations</CardTitle>
         <CardDescription>Select a row to make it the current investigation.</CardDescription>

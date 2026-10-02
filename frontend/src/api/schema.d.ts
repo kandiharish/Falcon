@@ -789,6 +789,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Dashboard */
+        get: operations["dashboard_api_dashboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search */
+        get: operations["search_api_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -807,6 +841,15 @@ export interface components {
             embed_model_ready: boolean;
             /** Message */
             message: string;
+        };
+        /** Alert */
+        Alert: {
+            /** Tone */
+            tone: string;
+            /** Title */
+            title: string;
+            /** Link */
+            link: string;
         };
         /** AskIn */
         AskIn: {
@@ -898,6 +941,55 @@ export interface components {
              * @default
              */
             tags: string;
+        };
+        /** Bucket */
+        Bucket: {
+            /** Start */
+            start: string;
+            /** Count */
+            count: number;
+        };
+        /** CaseBrief */
+        CaseBrief: {
+            /** Reference */
+            reference: string;
+            /** Title */
+            title: string;
+            /** Status */
+            status: string;
+            /** Priority */
+            priority: string;
+            /** Stage */
+            stage: string;
+            /** Lead */
+            lead: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** CorrelationBrief */
+        CorrelationBrief: {
+            /** Reference */
+            reference: string;
+            /** Investigation Reference */
+            investigation_reference: string;
+            /** Evidence A */
+            evidence_a: string;
+            /** Evidence B */
+            evidence_b: string;
+            /** Level */
+            level: string;
+            /** Score */
+            score: number;
+            /** Review Status */
+            review_status: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /** CorrelationDetail */
         CorrelationDetail: {
@@ -1012,6 +1104,42 @@ export interface components {
              * Format: date-time
              */
             session_expires_at: string;
+        };
+        /** DashboardOut */
+        DashboardOut: {
+            /** Metrics */
+            metrics: {
+                [key: string]: number;
+            };
+            /** Evidence By Type */
+            evidence_by_type: {
+                [key: string]: number;
+            };
+            /** Evidence By Status */
+            evidence_by_status: {
+                [key: string]: number;
+            };
+            /** Correlations By Level */
+            correlations_by_level: {
+                [key: string]: number;
+            };
+            event_activity: components["schemas"]["EventActivity"];
+            /** Activity By Day */
+            activity_by_day: components["schemas"]["Bucket"][];
+            /** Recent Investigations */
+            recent_investigations: components["schemas"]["CaseBrief"][];
+            /** Recent Evidence */
+            recent_evidence: components["schemas"]["app__api__overview__EvidenceBrief"][];
+            /** Pending Correlations */
+            pending_correlations: components["schemas"]["CorrelationBrief"][];
+            /** Recent Correlations */
+            recent_correlations: components["schemas"]["CorrelationBrief"][];
+            /** My Tasks */
+            my_tasks: components["schemas"]["TaskOut"][];
+            /** Alerts */
+            alerts: components["schemas"]["Alert"][];
+            /** Activity */
+            activity: components["schemas"]["AuditEntry"][];
         };
         /** DatabaseHealth */
         DatabaseHealth: {
@@ -1191,6 +1319,13 @@ export interface components {
             /** Added Manually */
             added_manually: boolean;
         };
+        /** EventActivity */
+        EventActivity: {
+            /** Unit */
+            unit: string;
+            /** Buckets */
+            buckets: components["schemas"]["Bucket"][];
+        };
         /** EventCreate */
         EventCreate: {
             /** Evidence Reference */
@@ -1272,15 +1407,6 @@ export interface components {
             items: components["schemas"]["EventOut"][];
             /** Total */
             total: number;
-        };
-        /** EvidenceBrief */
-        EvidenceBrief: {
-            /** Reference */
-            reference: string;
-            /** Evidence Type */
-            evidence_type: string;
-            /** Description */
-            description: string;
         };
         /** EvidenceOut */
         EvidenceOut: {
@@ -1747,7 +1873,7 @@ export interface components {
         };
         /** Passage */
         Passage: {
-            evidence: components["schemas"]["EvidenceBrief"];
+            evidence: components["schemas"]["app__api__ai__EvidenceBrief"];
             /** Score */
             score: number;
             /** Passage */
@@ -1881,6 +2007,21 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** SearchHit */
+        SearchHit: {
+            /** Kind */
+            kind: string;
+            /** Reference */
+            reference: string;
+            /** Title */
+            title: string;
+            /** Subtitle */
+            subtitle: string;
+            /** Investigation Reference */
+            investigation_reference: string;
+            /** Link */
+            link: string;
+        };
         /** SearchIn */
         SearchIn: {
             /** Question */
@@ -1902,7 +2043,7 @@ export interface components {
             /** Events */
             events: components["schemas"]["EventOut"][];
             /** Evidence */
-            evidence: components["schemas"]["EvidenceBrief"][];
+            evidence: components["schemas"]["app__api__ai__EvidenceBrief"][];
             /** Entities */
             entities: components["schemas"]["EntityBrief"][];
             /** Path */
@@ -1964,7 +2105,7 @@ export interface components {
         };
         /** SimilarOut */
         SimilarOut: {
-            evidence: components["schemas"]["EvidenceBrief"];
+            evidence: components["schemas"]["app__api__ai__EvidenceBrief"];
             /**
              * Kind
              * @enum {string}
@@ -2127,6 +2268,33 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** EvidenceBrief */
+        app__api__ai__EvidenceBrief: {
+            /** Reference */
+            reference: string;
+            /** Evidence Type */
+            evidence_type: string;
+            /** Description */
+            description: string;
+        };
+        /** EvidenceBrief */
+        app__api__overview__EvidenceBrief: {
+            /** Reference */
+            reference: string;
+            /** Investigation Reference */
+            investigation_reference: string;
+            /** Evidence Type */
+            evidence_type: string;
+            /** Description */
+            description: string;
+            /** Status */
+            status: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
     };
     responses: never;
@@ -3813,6 +3981,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dashboard_api_dashboard_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardOut"];
+                };
+            };
+        };
+    };
+    search_api_search_get: {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchHit"][];
                 };
             };
             /** @description Validation Error */

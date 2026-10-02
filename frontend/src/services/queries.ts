@@ -16,10 +16,11 @@ import { GraphService, type GraphQuery } from './graphService'
 import { AIService } from './aiService'
 import { WorkService, type TaskInput } from './workService'
 import { ReportService, type NewReport } from './reportService'
-import { ApiError } from './apiClient'
+import { ApiError, apiGet } from './apiClient'
 import { AuthService, type LoginInput } from './authService'
 import { EvidenceService, isProcessing, type EvidenceQuery, type NewEvidence } from './evidenceService'
 import { ExtractionService, type EntityQuery, type EventQuery, type NewAnnotation } from './extractionService'
+import type { DashboardDto, SearchHitDto } from '@/api/types'
 import type { EntityType, ReviewStatus } from '@/domain/types'
 import {
   InvestigationService,
@@ -383,4 +384,23 @@ export const useGenerateReport = (caseRef: string) =>
   useMutation({
     mutationFn: (input: NewReport) => ReportService.generate(caseRef, input),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reports', caseRef] }),
+  })
+
+// ---------- Dashboard & global search ----------------------------------------------------
+
+export const useDashboard = (enabled: boolean) =>
+  useQuery({
+    queryKey: ['dashboard'],
+    queryFn: () => apiGet<DashboardDto>('/dashboard'),
+    enabled,
+    refetchInterval: 60_000,
+  })
+
+export const useGlobalSearch = (text: string) =>
+  useQuery({
+    queryKey: ['search', text],
+    queryFn: () => apiGet<SearchHitDto[]>(`/search?q=${encodeURIComponent(text)}`),
+    enabled: text.trim().length >= 2,
+    placeholderData: keepPreviousData,
+    staleTime: 15_000,
   })
