@@ -310,3 +310,46 @@ export interface Correlation {
 export interface CorrelationDetail extends Correlation {
   supportingEvents: InvestigationEvent[]
 }
+
+export type GraphNodeKind = 'entity' | 'evidence' | 'event'
+export type GraphEdgeType =
+  | 'appears_in'
+  | 'communicated_with'
+  | 'connected_to'
+  | 'related_evidence'
+  | 'involved_in'
+  | 'recorded_in'
+
+export interface GraphNode {
+  id: string // "entity:V001", "evidence:CCTV-001", "event:E002"
+  kind: GraphNodeKind
+  type: string // entity / evidence / event type
+  reference: string
+  label: string
+  reviewStatus: ReviewStatus | null
+  degree: number
+  details: Record<string, unknown>
+}
+
+/** A link in the graph, always with the reason it exists. */
+export interface GraphEdge {
+  id: string
+  source: string
+  target: string
+  type: GraphEdgeType
+  why: string
+  confidence: number
+  reviewStatus: ReviewStatus
+  assertionKinds: AssertionKind[]
+  supportingEvidence: string[]
+  supportingEvents: string[]
+  details: Record<string, unknown>
+}
+
+export interface RelationshipGraph {
+  nodes: GraphNode[]
+  edges: GraphEdge[]
+  totalNodes: number
+  totalEdges: number
+  truncated: boolean
+}

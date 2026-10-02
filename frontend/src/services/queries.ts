@@ -12,6 +12,7 @@ import {
 } from '@tanstack/react-query'
 import { AdminService } from './adminService'
 import { CorrelationService, type CorrelationQuery } from './correlationService'
+import { GraphService, type GraphQuery } from './graphService'
 import { ApiError } from './apiClient'
 import { AuthService, type LoginInput } from './authService'
 import { EvidenceService, isProcessing, type EvidenceQuery, type NewEvidence } from './evidenceService'
@@ -227,6 +228,7 @@ export const useExtracted = (caseRef: string, evidenceRef: string, enabled = tru
 const refreshExtraction = (caseRef: string) =>
   Promise.all([
     queryClient.invalidateQueries({ queryKey: extractionKeys.all(caseRef) }),
+    queryClient.invalidateQueries({ queryKey: ['graph', caseRef] }),
     queryClient.invalidateQueries({ queryKey: queryKeys.investigations }),
   ])
 
@@ -283,6 +285,7 @@ export const useCorrelation = (caseRef: string, ref: string) =>
 const refreshCorrelations = (caseRef: string) =>
   Promise.all([
     queryClient.invalidateQueries({ queryKey: correlationKeys.all(caseRef) }),
+    queryClient.invalidateQueries({ queryKey: ['graph', caseRef] }),
     queryClient.invalidateQueries({ queryKey: queryKeys.investigations }),
   ])
 
@@ -294,4 +297,14 @@ export const useReviewCorrelation = (caseRef: string, ref: string) =>
     mutationFn: ({ status, note }: { status: ReviewStatus; note?: string }) =>
       CorrelationService.review(caseRef, ref, status, note),
     onSuccess: () => refreshCorrelations(caseRef),
+  })
+
+// ---------- Relationship graph -----------------------------------------------------------
+
+export const useGraph = (caseRef: string | null, query: GraphQuery = {}) =>
+  useQuery({
+    queryKey: ['graph', caseRef ?? 'none', query] as const,
+    queryFn: () => GraphService.get(caseRef as string, query),
+    enabled: caseRef !== null,
+    placeholderData: keepPreviousData,
   })

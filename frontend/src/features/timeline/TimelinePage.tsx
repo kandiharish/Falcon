@@ -1,5 +1,5 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { ChartGantt, FileStack, FolderSearch, Map as MapIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -45,7 +45,9 @@ export function TimelinePage() {
   const [view, setView] = useState<'timeline' | 'map'>('timeline')
   const [groupBy, setGroupBy] = useState<GroupBy>('source')
   const [category, setCategory] = useState<Category | typeof ALL>(ALL)
-  const [entity, setEntity] = useState<string>(ALL)
+  // ?entity=V001 (from the graph or an entity profile) opens the timeline filtered to it.
+  const [searchParams] = useSearchParams()
+  const [entity, setEntity] = useState<string>(() => searchParams.get('entity') ?? ALL)
   const [evidenceType, setEvidenceType] = useState<string>(ALL)
   const [showRejected, setShowRejected] = useState(false)
   const [selected, setSelected] = useState<InvestigationEvent | null>(null)

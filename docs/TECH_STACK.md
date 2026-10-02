@@ -49,7 +49,7 @@ Legend: ✅ in use now · 🔜 planned (phase)
 | leaflet.markercluster | 1.5 | ✅ P7 | Groups nearby points into numbered bubbles | Keeps maps readable with many events. |
 | Intl API (built into browsers) | — | ✅ P7 | Time zones: show/read times in the case's zone | No date library needed (moment / date-fns not required). |
 | tzdata (Python) | — | ✅ P7 | IANA time-zone database for the backend | Windows has no system zone database. |
-| Cytoscape.js | — | 🔜 P9 | Relationship graph | Built for network analysis (layouts, shortest path, centrality). React Flow is for flowcharts; D3 means building everything. |
+| Cytoscape.js + cytoscape-fcose | 3.34 / 2.2 | ✅ P9 | Relationship graph on a canvas; fCoSE force-directed layout | Built for network analysis (layouts, shortest path, centrality); MIT. React Flow is for flowcharts; D3 means building everything. Used directly (no unmaintained React wrapper), lazy-loaded (~178 kB gzip). |
 
 ## 2. Backend
 
@@ -80,7 +80,7 @@ Legend: ✅ in use now · 🔜 planned (phase)
 | PostGIS | 3.5 | ✅ P0, used P7 | Geo queries: `ST_DWithin` on geography points ("events within 100 m") | Real distances on the Earth's surface, in one SQL line. |
 | pgvector | 0.8 | ✅ P0 | Vector similarity search | Duplicate/similar evidence without a separate vector DB. |
 | pg_trgm | 1.6 | ✅ P0 | Fuzzy text search | "CCTV-01" finds "CCTV-001". Replaces Elasticsearch for our scale. |
-| Graph in PostgreSQL | — | 🔜 P9 | Relationships table + recursive SQL | One database = no sync problems. Neo4j only if ever justified. |
+| Graph in PostgreSQL | — | ✅ P9 | Graph = a view over mentions, event participants and correlations, built per request by a pure Python builder (BFS for focus) | One database = no sync problems, no copy that can go stale. Neo4j only if cases ever reach millions of links. |
 | Docker Desktop + Compose | 29 / v5 | ✅ P0 | Runs PostgreSQL in a container | Same setup on any machine; nothing installed into Windows. |
 | WSL 2 | 2.7 | ✅ P0 | Linux kernel for Docker on Windows | Containers are Linux programs. |
 | Local disk storage | — | ✅ P5 | Evidence files (`storage/`, git-ignored; originals read-only) | MinIO's free edition was archived in 2026; `app/storage/local.py` can be swapped for S3-compatible storage later. |

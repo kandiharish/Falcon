@@ -526,6 +526,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/investigations/{case_reference}/graph": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Graph */
+        get: operations["get_graph_api_investigations__case_reference__graph_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -740,6 +757,36 @@ export interface components {
              */
             extensions: {
                 [key: string]: string | null;
+            };
+        };
+        /** EdgeOut */
+        EdgeOut: {
+            /** Id */
+            id: string;
+            /** Source */
+            source: string;
+            /** Target */
+            target: string;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "appears_in" | "communicated_with" | "connected_to" | "related_evidence" | "involved_in" | "recorded_in";
+            /** Why */
+            why: string;
+            /** Confidence */
+            confidence: number;
+            /** Review Status */
+            review_status: string;
+            /** Assertion Kinds */
+            assertion_kinds: string[];
+            /** Supporting Evidence */
+            supporting_evidence: string[];
+            /** Supporting Events */
+            supporting_events: string[];
+            /** Details */
+            details: {
+                [key: string]: unknown;
             };
         };
         /** EntityCreate */
@@ -1053,6 +1100,19 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** GraphOut */
+        GraphOut: {
+            /** Nodes */
+            nodes: components["schemas"]["NodeOut"][];
+            /** Edges */
+            edges: components["schemas"]["EdgeOut"][];
+            /** Total Nodes */
+            total_nodes: number;
+            /** Total Edges */
+            total_edges: number;
+            /** Truncated */
+            truncated: boolean;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -1318,6 +1378,30 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** NodeOut */
+        NodeOut: {
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "entity" | "evidence" | "event";
+            /** Type */
+            type: string;
+            /** Reference */
+            reference: string;
+            /** Label */
+            label: string;
+            /** Review Status */
+            review_status: string | null;
+            /** Degree */
+            degree: number;
+            /** Details */
+            details: {
+                [key: string]: unknown;
+            };
         };
         /** Participant */
         Participant: {
@@ -2573,6 +2657,47 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CorrelationDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_graph_api_investigations__case_reference__graph_get: {
+        parameters: {
+            query?: {
+                include_events?: boolean;
+                include_evidence?: boolean;
+                include_rejected?: boolean;
+                include_stale?: boolean;
+                entity_type?: string[] | null;
+                min_level?: "low" | "medium" | "high";
+                focus?: string | null;
+                depth?: number;
+                max_nodes?: number;
+            };
+            header?: never;
+            path: {
+                case_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraphOut"];
                 };
             };
             /** @description Validation Error */

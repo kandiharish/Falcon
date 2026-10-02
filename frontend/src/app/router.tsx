@@ -49,6 +49,10 @@ const builtPages: Record<string, RouteObject['lazy']> = {
     const { CorrelationsPage } = await import('@/features/correlations/CorrelationsPage')
     return { Component: () => guard(navItem('correlations'), <CorrelationsPage />) }
   },
+  graph: async () => {
+    const { GraphPage } = await import('@/features/graph/GraphPage')
+    return { Component: () => guard(navItem('graph'), <GraphPage />) }
+  },
   admin: async () => {
     const { UsersPage } = await import('@/features/admin/UsersPage')
     return { Component: () => guard(navItem('admin'), <UsersPage />) }
