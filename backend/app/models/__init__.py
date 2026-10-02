@@ -6,6 +6,7 @@ from app.models.correlation import Correlation
 from app.models.evidence import Evidence, EvidenceReferenceCounter, ProcessingJob
 from app.models.extraction import Entity, EntityMention, Event, EventParticipant
 from app.models.investigation import Investigation, InvestigationMember, ReferenceCounter
+from app.models.report import Report
 from app.models.user import User, UserSession
 from app.models.work import Notification, Task
 
@@ -24,6 +25,7 @@ __all__ = [
     "Notification",
     "ProcessingJob",
     "ReferenceCounter",
+    "Report",
     "Task",
     "User",
     "UserSession",

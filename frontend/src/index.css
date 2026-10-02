@@ -214,3 +214,34 @@
   color: var(--primary-foreground);
   font-weight: 600;
 }
+
+/* ---------- Printing (reports) -----------------------------------------------------------
+   Print = paper: the app's navigation disappears and colours switch to black on white,
+   whatever theme is on screen. Mark anything else that should not print with data-print="hide". */
+@media print {
+  [data-slot="sidebar"],
+  [data-slot="sidebar-gap"],
+  [data-slot="sidebar-container"],
+  [data-print="hide"],
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+  :root,
+  .dark {
+    --background: #fff;
+    --foreground: #111;
+    --card: #fff;
+    --card-foreground: #111;
+    --muted: #f2f2f2;
+    --muted-foreground: #444;
+    --border: #bbb;
+    --primary: #0b4f6c;
+    color-scheme: light;
+  }
+  #main {
+    padding: 0 !important;
+  }
+  .print-avoid-break {
+    break-inside: avoid;
+  }
+}

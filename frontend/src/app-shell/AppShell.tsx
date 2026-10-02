@@ -39,7 +39,7 @@ export function AppShell() {
       </a>
       <AppSidebar />
       <SidebarInset>
-        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 px-3 backdrop-blur lg:px-4">
+        <header data-print="hide" className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 px-3 backdrop-blur lg:px-4">
           <SidebarTrigger aria-label="Toggle navigation" />
           <Separator orientation="vertical" className="mr-1 h-5!" />
           <Breadcrumb className="hidden md:block">

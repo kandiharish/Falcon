@@ -61,6 +61,10 @@ const builtPages: Record<string, RouteObject['lazy']> = {
     const { TasksPage } = await import('@/features/tasks/TasksPage')
     return { Component: () => guard(navItem('tasks'), <TasksPage />) }
   },
+  reports: async () => {
+    const { ReportsPage } = await import('@/features/reports/ReportsPage')
+    return { Component: () => guard(navItem('reports'), <ReportsPage />) }
+  },
   admin: async () => {
     const { UsersPage } = await import('@/features/admin/UsersPage')
     return { Component: () => guard(navItem('admin'), <UsersPage />) }
@@ -130,6 +134,13 @@ export const router = createBrowserRouter([
             lazy: async () => {
               const { CorrelationDetailPage } = await import('@/features/correlations/CorrelationDetailPage')
               return { Component: () => guard(navItem('correlations'), <CorrelationDetailPage />) }
+            },
+          },
+          {
+            path: 'investigations/:reference/reports/:reportRef',
+            lazy: async () => {
+              const { ReportDetailPage } = await import('@/features/reports/ReportDetailPage')
+              return { Component: () => guard(navItem('reports'), <ReportDetailPage />) }
             },
           },
           {

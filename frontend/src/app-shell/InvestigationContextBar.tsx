@@ -19,7 +19,7 @@ export function InvestigationContextBar() {
   if (!allowed || !currentId) return null
 
   return (
-    <div className="border-b bg-card/60 px-4 py-2 lg:px-6">
+    <div data-print="hide" className="border-b bg-card/60 px-4 py-2 lg:px-6">
       {isPending || !investigation ? (
         <Skeleton className="h-6 w-full max-w-2xl" />
       ) : (

@@ -15,6 +15,7 @@ import { CorrelationService, type CorrelationQuery } from './correlationService'
 import { GraphService, type GraphQuery } from './graphService'
 import { AIService } from './aiService'
 import { WorkService, type TaskInput } from './workService'
+import { ReportService, type NewReport } from './reportService'
 import { ApiError } from './apiClient'
 import { AuthService, type LoginInput } from './authService'
 import { EvidenceService, isProcessing, type EvidenceQuery, type NewEvidence } from './evidenceService'
@@ -364,4 +365,22 @@ export const useMarkNotificationsRead = () =>
   useMutation({
     mutationFn: (id: string | null) => (id ? WorkService.markRead(id) : WorkService.markAllRead()),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+  })
+
+// ---------- Reports -----------------------------------------------------------------------
+
+export const useReports = (caseRef: string | null) =>
+  useQuery({
+    queryKey: ['reports', caseRef ?? 'none'],
+    queryFn: () => ReportService.list(caseRef as string),
+    enabled: caseRef !== null,
+  })
+
+export const useReport = (caseRef: string, reference: string) =>
+  useQuery({ queryKey: ['reports', caseRef, reference], queryFn: () => ReportService.get(caseRef, reference) })
+
+export const useGenerateReport = (caseRef: string) =>
+  useMutation({
+    mutationFn: (input: NewReport) => ReportService.generate(caseRef, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reports', caseRef] }),
   })

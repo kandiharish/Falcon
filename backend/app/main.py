@@ -14,6 +14,7 @@ from app.api import (
     graph,
     health,
     investigations,
+    reports,
     work,
 )
 from app.core.config import get_settings
@@ -54,6 +55,7 @@ def create_app() -> FastAPI:
     app.include_router(graph.router, prefix="/api")
     app.include_router(ai.router, prefix="/api")
     app.include_router(work.router, prefix="/api")
+    app.include_router(reports.router, prefix="/api")
     return app
 
 
