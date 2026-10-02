@@ -8,9 +8,12 @@ dependencies = [
     "alembic>=1.20.0",
     "argon2-cffi>=25.1.0",
     "fastapi>=0.142.2",
+    "filetype>=1.2.0",
+    "pillow>=12.3.0",
     "psycopg[binary]>=3.3.6",
     "pydantic-settings>=2.15.0",
     "pydantic[email]>=2.13.5",
+    "python-multipart>=0.0.32",
     "sqlalchemy>=2",
     "uvicorn[standard]>=0.54.0",
 ]

@@ -194,6 +194,149 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/investigations/{case_reference}/evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Evidence */
+        get: operations["list_evidence_api_investigations__case_reference__evidence_get"];
+        put?: never;
+        /** Upload Evidence */
+        post: operations["upload_evidence_api_investigations__case_reference__evidence_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/evidence/{evidence_reference}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Evidence */
+        get: operations["get_evidence_api_investigations__case_reference__evidence__evidence_reference__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/evidence/{evidence_reference}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download Original
+         * @description The original file, always as a download (never rendered by the browser).
+         */
+        get: operations["download_original_api_investigations__case_reference__evidence__evidence_reference__content_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/evidence/{evidence_reference}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview
+         * @description A derived JPEG preview (images only). The original is never served inline.
+         */
+        get: operations["preview_api_investigations__case_reference__evidence__evidence_reference__preview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/evidence/{evidence_reference}/verify-integrity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify Integrity */
+        post: operations["verify_integrity_api_investigations__case_reference__evidence__evidence_reference__verify_integrity_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/evidence/{evidence_reference}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Change Status */
+        post: operations["change_status_api_investigations__case_reference__evidence__evidence_reference__status_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/evidence/{evidence_reference}/reprocess": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reprocess */
+        post: operations["reprocess_api_investigations__case_reference__evidence__evidence_reference__reprocess_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/evidence/{evidence_reference}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Evidence History */
+        get: operations["evidence_history_api_investigations__case_reference__evidence__evidence_reference__history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -242,6 +385,46 @@ export interface components {
             /** Ip Address */
             ip_address: string | null;
         };
+        /** Body_upload_evidence_api_investigations__case_reference__evidence_post */
+        Body_upload_evidence_api_investigations__case_reference__evidence_post: {
+            /**
+             * File
+             * @description The evidence file
+             */
+            file: string;
+            /**
+             * Evidence Type
+             * @enum {string}
+             */
+            evidence_type: "video" | "image" | "document" | "gps" | "mobile" | "call_records" | "financial" | "vehicle" | "witness_statement" | "digital_file" | "other";
+            /**
+             * Source
+             * @default
+             */
+            source: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Collected At */
+            collected_at?: string | null;
+            /**
+             * Location Text
+             * @default
+             */
+            location_text: string;
+            /** Latitude */
+            latitude?: number | null;
+            /** Longitude */
+            longitude?: number | null;
+            /**
+             * Tags
+             * @description Comma-separated
+             * @default
+             */
+            tags: string;
+        };
         /** CurrentUserResponse */
         CurrentUserResponse: {
             /**
@@ -278,6 +461,74 @@ export interface components {
             extensions: {
                 [key: string]: string | null;
             };
+        };
+        /** EvidenceOut */
+        EvidenceOut: {
+            /** Reference */
+            reference: string;
+            /** Investigation Reference */
+            investigation_reference: string;
+            /**
+             * Evidence Type
+             * @enum {string}
+             */
+            evidence_type: "video" | "image" | "document" | "gps" | "mobile" | "call_records" | "financial" | "vehicle" | "witness_statement" | "digital_file" | "other";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "uploaded" | "processing" | "processed" | "verified" | "requires_review" | "archived";
+            /** Source */
+            source: string;
+            /** Description */
+            description: string;
+            /** Collected At */
+            collected_at: string | null;
+            /** Location Text */
+            location_text: string;
+            /** Latitude */
+            latitude: number | null;
+            /** Longitude */
+            longitude: number | null;
+            /** Tags */
+            tags: string[];
+            /** Original Filename */
+            original_filename: string;
+            /** Media Type */
+            media_type: string;
+            /** Size Bytes */
+            size_bytes: number;
+            /** Sha256 */
+            sha256: string;
+            /** Integrity Checked At */
+            integrity_checked_at: string | null;
+            /** Integrity Ok */
+            integrity_ok: boolean | null;
+            /** Has Preview */
+            has_preview: boolean;
+            /** File Metadata */
+            file_metadata: {
+                [key: string]: unknown;
+            };
+            /** Uploaded By */
+            uploaded_by: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            latest_job: components["schemas"]["JobOut"] | null;
+        };
+        /** EvidencePage */
+        EvidencePage: {
+            /** Items */
+            items: components["schemas"]["EvidenceOut"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -417,6 +668,51 @@ export interface components {
             /** Tags */
             tags?: string[] | null;
         };
+        /** JobOut */
+        JobOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "queued" | "running" | "succeeded" | "failed";
+            /** Progress */
+            progress: number;
+            /** Current Step */
+            current_step: string | null;
+            /** Steps */
+            steps: components["schemas"]["JobStep"][];
+            /** Attempts */
+            attempts: number;
+            /** Error Message */
+            error_message: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Started At */
+            started_at: string | null;
+            /** Finished At */
+            finished_at: string | null;
+        };
+        /** JobStep */
+        JobStep: {
+            /** Name */
+            name: string;
+            /** Label */
+            label: string;
+            /** Status */
+            status: string;
+            /** Summary */
+            summary: string;
+            /** Duration Ms */
+            duration_ms: number;
+        };
         /** LoginRequest */
         LoginRequest: {
             /**
@@ -473,6 +769,16 @@ export interface components {
             id: string;
             /** Display Name */
             display_name: string;
+        };
+        /** StatusChange */
+        StatusChange: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "processed" | "verified" | "requires_review";
+            /** Note */
+            note?: string | null;
         };
         /** UserSummary */
         UserSummary: {
@@ -891,6 +1197,306 @@ export interface operations {
             header?: never;
             path: {
                 reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditEntry"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_evidence_api_investigations__case_reference__evidence_get: {
+        parameters: {
+            query?: {
+                search?: string | null;
+                evidence_type?: ("video" | "image" | "document" | "gps" | "mobile" | "call_records" | "financial" | "vehicle" | "witness_statement" | "digital_file" | "other") | null;
+                status?: ("uploaded" | "processing" | "processed" | "verified" | "requires_review" | "archived") | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                case_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidencePage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_evidence_api_investigations__case_reference__evidence_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_evidence_api_investigations__case_reference__evidence_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidenceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_evidence_api_investigations__case_reference__evidence__evidence_reference__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+                evidence_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidenceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_original_api_investigations__case_reference__evidence__evidence_reference__content_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+                evidence_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_api_investigations__case_reference__evidence__evidence_reference__preview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+                evidence_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_integrity_api_investigations__case_reference__evidence__evidence_reference__verify_integrity_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+                evidence_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidenceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_status_api_investigations__case_reference__evidence__evidence_reference__status_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+                evidence_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusChange"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidenceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reprocess_api_investigations__case_reference__evidence__evidence_reference__reprocess_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+                evidence_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvidenceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evidence_history_api_investigations__case_reference__evidence__evidence_reference__history_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+                evidence_reference: string;
             };
             cookie?: never;
         };

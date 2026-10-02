@@ -7,6 +7,7 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -43,6 +44,13 @@ class Investigation(Base):
         CheckConstraint(_in("status", INVESTIGATION_STATUSES), name="valid_status"),
         CheckConstraint(_in("priority", PRIORITIES), name="valid_priority"),
         CheckConstraint(_in("stage", WORKFLOW_STAGES), name="valid_stage"),
+        # Fast "contains"/fuzzy title search (pg_trgm). Declared here so Alembic keeps it.
+        Index(
+            "ix_investigations_title_trgm",
+            "title",
+            postgresql_using="gin",
+            postgresql_ops={"title": "gin_trgm_ops"},
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4)
@@ -96,5 +104,5 @@ class ReferenceCounter(Base):
 
     __tablename__ = "investigation_reference_counters"
 
-    year: Mapped[int] = mapped_column(Integer, primary_key=True)
+    year: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
     last_value: Mapped[int] = mapped_column(Integer, default=0)

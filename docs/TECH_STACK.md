@@ -61,11 +61,13 @@ Legend: ✅ in use now · 🔜 planned (phase)
 | psycopg | 3 | ✅ P1 | PostgreSQL driver | Modern, maintained. |
 | pytest + httpx2 | — | ✅ P1 | Backend tests | Standard Python testing. |
 | Ruff | 0.16 | ✅ P1 | Lint + format | One fast tool replaces flake8 + isort + black. |
+| python-multipart | 0.0.x | ✅ P5 | File uploads (multipart forms) | Required by FastAPI for `UploadFile`. |
+| filetype | 1.2 | ✅ P5 | Detect real file type from content ("magic bytes") | Pure Python (no system library needed on Windows), unlike python-magic. |
 | Alembic | 1.x | ✅ P3 | Database migrations | Version control for the database structure; migrations also build the test database. |
 | argon2-cffi | — | ✅ P3 | Password hashing | Current best practice (Argon2id), OWASP-recommended. |
 | pyotp | — | 🔜 P11 | TOTP multi-factor codes | Works with any authenticator app. The user table is already MFA-ready. |
 | Server-side sessions (httpOnly cookie) | — | ✅ P3 | Sign-in state | Revocable instantly; the database stores only a SHA-256 hash of each token. Chosen over JWT, which cannot be revoked before it expires. |
-| Postgres job queue (`FOR UPDATE SKIP LOCKED`) | — | 🔜 P5 | Background processing | The ProcessingJob table *is* the queue — no Redis/Celery to run. |
+| Postgres job queue (`FOR UPDATE SKIP LOCKED`) | — | ✅ P5 | Background processing (`python -m app.worker`) | The ProcessingJob table *is* the queue — no Redis/Celery to run. Tested with two competing workers. |
 
 ## 3. Data & infrastructure
 
@@ -78,7 +80,7 @@ Legend: ✅ in use now · 🔜 planned (phase)
 | Graph in PostgreSQL | — | 🔜 P9 | Relationships table + recursive SQL | One database = no sync problems. Neo4j only if ever justified. |
 | Docker Desktop + Compose | 29 / v5 | ✅ P0 | Runs PostgreSQL in a container | Same setup on any machine; nothing installed into Windows. |
 | WSL 2 | 2.7 | ✅ P0 | Linux kernel for Docker on Windows | Containers are Linux programs. |
-| Local disk storage | — | 🔜 P5 | Evidence files (`storage/`, git-ignored) | MinIO's free edition was archived in 2026; a `StorageService` interface lets us move to S3-compatible cloud storage later. |
+| Local disk storage | — | ✅ P5 | Evidence files (`storage/`, git-ignored; originals read-only) | MinIO's free edition was archived in 2026; `app/storage/local.py` can be swapped for S3-compatible storage later. |
 | Git + GitHub | — | ✅ P0 | Version control + backup | github.com/kandiharish/Falcon |
 | GitHub Actions | — | 🔜 P12 | Automatic tests on every push | Free for public repos. |
 
@@ -90,7 +92,7 @@ AI **suggests**, humans **decide**. Every AI output is labelled (Extracted / Det
 |---|---|---|---|---|---|
 | OCR (text in images/scans) | **Tesseract 5** with the `eng` LSTM model | Neural OCR | ~20 MB | 🔜 P6 | Free, mature, CPU-only. |
 | PDF text | **PyMuPDF** | Parser (no ML) | — | 🔜 P6 | Exact text from digital PDFs; OCR only for scans. |
-| Photo metadata (GPS, time, camera) | **Pillow** EXIF reader | Parser (no ML) | — | 🔜 P5 | Facts, not guesses → labelled *Extracted*. |
+| Photo metadata (GPS, time, camera) | **Pillow** EXIF reader | Parser (no ML) | — | ✅ P5 | Facts, not guesses → labelled *Extracted*; camera time-zone offset honoured. |
 | Video metadata | **FFmpeg `ffprobe`** | Parser (no ML) | — | 🔜 P6 | Duration, codec, creation time. |
 | Names, places, organisations in text | **spaCy `en_core_web_sm`** | Named-entity recognition model | ~12 MB | 🔜 P6 | Small, fast on CPU; upgradeable to `en_core_web_trf` for accuracy. |
 | Phone numbers, emails, plates, account IDs | **Regex + `phonenumbers`** (port of Google libphonenumber) | Rules (no ML) | — | 🔜 P6 | 100% explainable, no false "AI" confidence. |

@@ -14,6 +14,7 @@ from app.models import Investigation, User
 from app.repositories.investigation_repository import InvestigationFilters
 from app.security.dependencies import require_permission
 from app.security.permissions import Permission
+from app.services import evidence_service
 from app.services import investigation_service as service
 from app.services.request_context import request_context
 
@@ -112,7 +113,7 @@ class AssignableUser(BaseModel):
     role: str
 
 
-def _out(investigation: Investigation, viewer: User) -> InvestigationOut:
+def _out(investigation: Investigation, viewer: User, evidence_count: int = 0) -> InvestigationOut:
     mine = next((m for m in investigation.members if m.user_id == viewer.id), None)
     return InvestigationOut(
         reference=investigation.reference,
@@ -130,10 +131,15 @@ def _out(investigation: Investigation, viewer: User) -> InvestigationOut:
         ),
         team_size=len(investigation.members),
         my_role_in_case=mine.role_in_case if mine else None,  # type: ignore[arg-type]
-        counts=InvestigationCounts(),
+        counts=InvestigationCounts(evidence=evidence_count),
         created_at=investigation.created_at,
         updated_at=investigation.updated_at,
     )
+
+
+def _with_counts(db: Session, investigation: Investigation, user: User) -> InvestigationOut:
+    counts = evidence_service.counts_by_investigation(db, [investigation.id])
+    return _out(investigation, user, counts.get(investigation.id, 0))
 
 
 # ---------- Routes ----------------------------------------------------------------------
@@ -151,8 +157,12 @@ def list_investigations(
 ) -> InvestigationPage:
     filters = InvestigationFilters(search=search or None, status=status_filter, priority=priority)
     items, total = service.list_investigations(db, user, filters, limit, offset)
+    counts = evidence_service.counts_by_investigation(db, [i.id for i in items])
     return InvestigationPage(
-        items=[_out(i, user) for i in items], total=total, limit=limit, offset=offset
+        items=[_out(i, user, counts.get(i.id, 0)) for i in items],
+        total=total,
+        limit=limit,
+        offset=offset,
     )
 
 
@@ -176,7 +186,8 @@ def assignable_users(_: Writer, db: DB) -> list[AssignableUser]:
 
 @router.get("/{reference}", response_model=InvestigationOut)
 def get_investigation(reference: str, user: Reader, db: DB) -> InvestigationOut:
-    return _out(service.get_investigation(db, user, reference), user)
+    investigation = service.get_investigation(db, user, reference)
+    return _with_counts(db, investigation, user)
 
 
 @router.patch("/{reference}", response_model=InvestigationOut)
@@ -186,7 +197,7 @@ def update_investigation(
     investigation = service.update_investigation(
         db, user, reference, body.model_dump(exclude_unset=True), request_context(request)
     )
-    return _out(investigation, user)
+    return _with_counts(db, investigation, user)
 
 
 @router.get("/{reference}/members", response_model=list[MemberOut])

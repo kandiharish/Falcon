@@ -19,6 +19,19 @@ export type EvidenceStatus =
   | 'requires_review'
   | 'archived'
 
+export type EvidenceType =
+  | 'video'
+  | 'image'
+  | 'document'
+  | 'gps'
+  | 'mobile'
+  | 'call_records'
+  | 'financial'
+  | 'vehicle'
+  | 'witness_statement'
+  | 'digital_file'
+  | 'other'
+
 export type ReviewStatus = 'pending' | 'confirmed' | 'rejected'
 
 export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'completed'
@@ -126,4 +139,50 @@ export interface UserSummary {
   locked: boolean
   lastLoginAt: string | null
   createdAt: string
+}
+
+export interface ProcessingStep {
+  name: string
+  label: string
+  status: string // 'done' | 'failed'
+  summary: string
+  durationMs: number
+}
+
+export interface ProcessingJob {
+  id: string
+  status: 'queued' | 'running' | 'succeeded' | 'failed'
+  progress: number
+  currentStep: string | null
+  steps: ProcessingStep[]
+  attempts: number
+  errorMessage: string | null
+  createdAt: string
+  startedAt: string | null
+  finishedAt: string | null
+}
+
+export interface Evidence {
+  reference: string // e.g. IMG-001
+  investigationReference: string
+  evidenceType: EvidenceType
+  status: EvidenceStatus
+  source: string
+  description: string
+  collectedAt: string | null
+  locationText: string
+  latitude: number | null
+  longitude: number | null
+  tags: string[]
+  originalFilename: string
+  mediaType: string
+  sizeBytes: number
+  sha256: string
+  integrityCheckedAt: string | null
+  integrityOk: boolean | null
+  hasPreview: boolean
+  fileMetadata: Record<string, unknown>
+  uploadedBy: string
+  createdAt: string
+  latestJob: ProcessingJob | null
 }

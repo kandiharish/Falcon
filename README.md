@@ -19,7 +19,8 @@ phase-by-phase learning notes are in [docs/learning/](docs/learning/).
 | P2 Design system + application shell | ✅ |
 | P3 Authentication, roles, audit foundation | ✅ |
 | P4 Investigation management (real data, team isolation, audit history) | ✅ |
-| P5 Evidence upload, integrity and processing jobs | next |
+| P5 Evidence upload, integrity (SHA-256), background processing | ✅ |
+| P6 Information extraction: entities and events | next |
 
 ## Prerequisites
 
@@ -39,14 +40,15 @@ The database listens on `127.0.0.1:5434` (see `POSTGRES_PORT` in `.env`).
 ## Run the app
 
 **Windows, one command:** `.\dev.ps1` — starts Docker, the database, applies migrations and opens
-the backend and frontend in their own windows.
+the backend, the processing worker and the frontend in their own windows.
 
-Or by hand, in three terminals:
+Or by hand, in four terminals:
 
 ```sh
 docker compose up -d                                          # 1. database
 cd backend  && uv run uvicorn app.main:app --reload --port 8010   # 2. API
-cd frontend && npm install && npm run dev                     # 3. web app
+cd backend  && uv run python -m app.worker                    # 3. processing worker
+cd frontend && npm install && npm run dev                     # 4. web app
 ```
 
 First time only — create the tables and the fictional demo users:
@@ -56,6 +58,13 @@ cd backend
 uv run alembic upgrade head                    # create/upgrade database tables
 uv run python -m app.scripts.seed_demo_users            # password = DEMO_PASSWORD in .env
 uv run python -m app.scripts.seed_demo_investigations   # fictional demo cases + teams
+uv run python -m app.scripts.seed_demo_evidence         # fictional evidence for CASE-2026-001
+```
+
+Start over with fresh demo data at any time (development only, deletes everything):
+
+```sh
+uv run python -m app.scripts.reset_demo_data --yes
 ```
 
 Open http://localhost:5190. API docs: http://localhost:8010/api/docs

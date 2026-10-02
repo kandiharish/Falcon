@@ -4,6 +4,16 @@
  */
 import {
   Archive,
+  Car,
+  FileArchive,
+  FileText,
+  Image as ImageIcon,
+  Landmark,
+  MapPinned,
+  MessageSquareQuote,
+  PhoneCall,
+  Smartphone,
+  Video,
   BadgeCheck,
   Brain,
   CircleCheck,
@@ -25,6 +35,7 @@ import {
 import type {
   AssertionKind,
   ConfidenceLevel,
+  EvidenceType,
   EvidenceStatus,
   InvestigationStatus,
   Priority,
@@ -192,6 +203,13 @@ export const auditActionLabels: Record<string, string> = {
   'investigation.created': 'Created the investigation',
   'investigation.updated': 'Updated the investigation',
   'investigation.member_added': 'Added a team member',
+  'evidence.uploaded': 'Uploaded the evidence',
+  'evidence.downloaded': 'Downloaded the original file',
+  'evidence.processed': 'Processing completed',
+  'evidence.processing_failed': 'Processing failed',
+  'evidence.integrity_checked': 'Checked integrity',
+  'evidence.status_changed': 'Changed the review status',
+  'evidence.reprocess_requested': 'Requested reprocessing',
 }
 
 export const fieldLabels: Record<string, string> = {
@@ -205,4 +223,28 @@ export const fieldLabels: Record<string, string> = {
   tags: 'Tags',
   member: 'Member',
   role_in_case: 'Role in case',
+}
+
+export const evidenceTypeTerms: Record<EvidenceType, { label: string; icon: LucideIcon; hint: string }> = {
+  video: { label: 'Video / CCTV', icon: Video, hint: 'MP4, MOV, AVI, MKV' },
+  image: { label: 'Image', icon: ImageIcon, hint: 'JPEG, PNG, TIFF, HEIC' },
+  document: { label: 'Document', icon: FileText, hint: 'PDF, DOCX, TXT' },
+  gps: { label: 'GPS / location data', icon: MapPinned, hint: 'CSV, GPX, JSON' },
+  mobile: { label: 'Mobile device data', icon: Smartphone, hint: 'CSV, JSON, XML, ZIP export' },
+  call_records: { label: 'Call records', icon: PhoneCall, hint: 'CSV, JSON' },
+  financial: { label: 'Financial transactions', icon: Landmark, hint: 'CSV, JSON, PDF' },
+  vehicle: { label: 'Vehicle records', icon: Car, hint: 'CSV, JSON' },
+  witness_statement: { label: 'Witness statement', icon: MessageSquareQuote, hint: 'PDF, DOCX, TXT' },
+  digital_file: { label: 'Digital file', icon: FileArchive, hint: 'Any file except programs' },
+  other: { label: 'Other', icon: FileArchive, hint: 'Any file except programs' },
+}
+
+/** A sensible first guess from the file name; the investigator can always change it. */
+export function guessEvidenceType(filename: string): EvidenceType | null {
+  const ext = filename.toLowerCase().split('.').pop() ?? ''
+  if (['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(ext)) return 'video'
+  if (['jpg', 'jpeg', 'png', 'tif', 'tiff', 'heic', 'webp', 'bmp'].includes(ext)) return 'image'
+  if (['pdf', 'docx', 'txt'].includes(ext)) return 'document'
+  if (ext === 'gpx') return 'gps'
+  return null
 }

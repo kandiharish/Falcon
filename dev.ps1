@@ -1,7 +1,7 @@
-# FALCON ??? start everything for local development (Windows PowerShell).
+# FALCON - start everything for local development (Windows PowerShell).
 #   Usage:  .\dev.ps1
 # 1. starts Docker Desktop if needed   2. starts the database   3. applies migrations
-# 4. opens the backend (:8010) and frontend (:5190) in their own windows
+# 4. opens the backend (:8010), the processing worker and the frontend (:5190) in their own windows
 
 # Note: tools like docker and uv print progress on stderr, which Windows PowerShell 5.1 would
 # treat as errors. So we check each program's exit code ($LASTEXITCODE) instead.
@@ -14,6 +14,15 @@ function Test-Docker {
 
 function Assert-Success([string]$step) {
     if ($LASTEXITCODE -ne 0) { Write-Host "FAILED: $step" -ForegroundColor Red; exit 1 }
+}
+
+function Test-Port([int]$port) {
+    return [bool](Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)
+}
+
+function Start-Window([string]$title, [string]$folder, [string]$command) {
+    $script = "`$Host.UI.RawUI.WindowTitle='$title'; Set-Location '$folder'; $command"
+    Start-Process powershell -ArgumentList '-NoExit', '-Command', $script
 }
 
 if (-not (Test-Docker)) {
@@ -39,26 +48,23 @@ Assert-Success 'database start'
 Pop-Location
 
 Write-Host 'Applying database migrations...'
-Push-Location "$root\backend"
+$backend = Join-Path $root 'backend'
+$frontend = Join-Path $root 'frontend'
+Push-Location $backend
 cmd /c "uv run alembic upgrade head 2>&1"
 Assert-Success 'database migrations'
 Pop-Location
 
-function Test-Port([int]$port) {
-    return [bool](Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue)
-}
-
 if (Test-Port 8010) { Write-Host 'Backend already running on :8010' }
-else {
-    Start-Process powershell -ArgumentList '-NoExit', '-Command',
-        "`$Host.UI.RawUI.WindowTitle='FALCON backend :8010'; Set-Location '$root\backend'; uv run uvicorn app.main:app --reload --port 8010"
-}
+else { Start-Window 'FALCON backend :8010' $backend 'uv run uvicorn app.main:app --reload --port 8010' }
+
+$workerRunning = Get-CimInstance Win32_Process -Filter "Name='python.exe'" |
+    Where-Object { $_.CommandLine -like '*app.worker*' }
+if ($workerRunning) { Write-Host 'Processing worker already running' }
+else { Start-Window 'FALCON worker' $backend 'uv run python -m app.worker' }
 
 if (Test-Port 5190) { Write-Host 'Frontend already running on :5190' }
-else {
-    Start-Process powershell -ArgumentList '-NoExit', '-Command',
-        "`$Host.UI.RawUI.WindowTitle='FALCON frontend :5190'; Set-Location '$root\frontend'; npm run dev"
-}
+else { Start-Window 'FALCON frontend :5190' $frontend 'npm run dev' }
 
 Write-Host ''
 Write-Host 'FALCON is starting:  http://localhost:5190   (API docs: http://localhost:8010/api/docs)'

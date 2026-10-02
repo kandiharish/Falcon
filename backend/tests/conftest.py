@@ -4,11 +4,14 @@ Tests never touch the development database.
 """
 
 import os
+import tempfile
 import uuid
 from collections.abc import Callable, Iterator
 
 # Must happen before the app is imported: settings read the environment once.
 os.environ["POSTGRES_DB"] = "falcon_test"
+# Evidence files written by tests go to a throw-away folder, never the real storage/.
+os.environ["STORAGE_DIR"] = tempfile.mkdtemp(prefix="falcon-test-storage-")
 
 import pytest  # noqa: E402
 from alembic import command  # noqa: E402
@@ -25,13 +28,13 @@ TEST_PASSWORD = "correct horse battery staple"
 
 
 def _create_test_database() -> None:
+    """Start every test run from an empty database, built by the real migrations."""
     settings = get_settings()
     admin_url = settings.database_url.rsplit("/", 1)[0] + "/postgres"
     engine = create_engine(admin_url, isolation_level="AUTOCOMMIT")
     with engine.connect() as conn:
-        exists = conn.scalar(text("SELECT 1 FROM pg_database WHERE datname = 'falcon_test'"))
-        if not exists:
-            conn.execute(text("CREATE DATABASE falcon_test"))
+        conn.execute(text("DROP DATABASE IF EXISTS falcon_test WITH (FORCE)"))
+        conn.execute(text("CREATE DATABASE falcon_test"))
     engine.dispose()
 
     test_engine = create_engine(settings.database_url, isolation_level="AUTOCOMMIT")

@@ -63,3 +63,43 @@ async function readErrorMessage(response: Response): Promise<string> {
 export const apiGet = <T>(path: string) => request<T>('GET', path)
 export const apiPost = <T>(path: string, body?: unknown) => request<T>('POST', path, body)
 export const apiPatch = <T>(path: string, body: unknown) => request<T>('PATCH', path, body)
+
+/**
+ * Upload a form with a file and report progress (0–100).
+ * fetch() cannot report upload progress, so this one uses XMLHttpRequest.
+ */
+export function apiUpload<T>(path: string, form: FormData, onProgress?: (percent: number) => void): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', `/api${path}`)
+    xhr.withCredentials = true
+    xhr.setRequestHeader('X-FALCON-Request', '1')
+    xhr.setRequestHeader('Accept', 'application/json')
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && onProgress) onProgress(Math.round((100 * event.loaded) / event.total))
+    }
+    xhr.onerror = () => reject(new ApiError(0, UNREACHABLE_MESSAGE))
+    xhr.onload = () => {
+      if (GATEWAY_STATUSES.has(xhr.status)) return reject(new ApiError(xhr.status, UNREACHABLE_MESSAGE))
+      let body: unknown = null
+      try {
+        body = JSON.parse(xhr.responseText)
+      } catch {
+        // not JSON
+      }
+      if (xhr.status >= 200 && xhr.status < 300) return resolve(body as T)
+      const detail = (body as { detail?: unknown } | null)?.detail
+      reject(
+        new ApiError(
+          xhr.status,
+          typeof detail === 'string'
+            ? detail
+            : xhr.status === 413
+              ? 'The file is too large to upload.'
+              : `The upload could not be completed (code ${xhr.status}). Try again.`,
+        ),
+      )
+    }
+    xhr.send(form)
+  })
+}

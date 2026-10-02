@@ -92,7 +92,7 @@ def create_investigation(
         priority=data.priority,
         location=data.location.strip(),
         description=data.description.strip(),
-        tags=_clean_tags(data.tags),
+        tags=clean_tags(data.tags),
         status="draft",
         stage="intake",
         lead_investigator_id=user.id,
@@ -132,7 +132,7 @@ def update_investigation(
                 f"{', '.join(sorted(ALLOWED_TRANSITIONS[investigation.status])) or 'none'}."
             )
     if "tags" in changes:
-        changes["tags"] = _clean_tags(changes["tags"])
+        changes["tags"] = clean_tags(changes["tags"])
 
     before = _snapshot(investigation)
     for key, value in changes.items():
@@ -208,7 +208,7 @@ def assignable_users(db: Session) -> list[User]:
     return [u for u in users if Permission.INVESTIGATION_READ in permissions_for(u.role)]
 
 
-def _clean_tags(tags: list[str]) -> list[str]:
+def clean_tags(tags: list[str]) -> list[str]:
     seen: list[str] = []
     for tag in tags:
         tag = tag.strip().lower()

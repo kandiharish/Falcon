@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -232,6 +232,11 @@ function OverviewTab({ investigation }: { investigation: Investigation }) {
         <CardHeader>
           <CardTitle>Case contents</CardTitle>
           <CardDescription>Filled as evidence is added and analysed.</CardDescription>
+          <CardAction>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/evidence">Open evidence</Link>
+            </Button>
+          </CardAction>
         </CardHeader>
         <CardContent>
           <ul className="divide-y text-sm">

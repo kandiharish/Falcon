@@ -12,6 +12,7 @@ import { allNavItems, type NavItem } from './navigation'
  *    └─ AppShell                sidebar + top bar
  *         ├─ index              overview
  *         ├─ investigations     investigation:read (list + /investigations/:reference)
+ *         ├─ evidence           evidence:read (list + /investigations/:ref/evidence/:evidenceRef)
  *         ├─ admin              users:read
  *         └─ other modules      their own permission ("planned" pages until built)
  *
@@ -27,6 +28,10 @@ const builtPages: Record<string, RouteObject['lazy']> = {
   investigations: async () => {
     const { InvestigationsPage } = await import('@/features/investigations/InvestigationsPage')
     return { Component: () => guard(navItem('investigations'), <InvestigationsPage />) }
+  },
+  evidence: async () => {
+    const { EvidencePage } = await import('@/features/evidence/EvidencePage')
+    return { Component: () => guard(navItem('evidence'), <EvidencePage />) }
   },
   admin: async () => {
     const { UsersPage } = await import('@/features/admin/UsersPage')
@@ -76,6 +81,13 @@ export const router = createBrowserRouter([
                 '@/features/investigations/InvestigationDetailPage'
               )
               return { Component: () => guard(navItem('investigations'), <InvestigationDetailPage />) }
+            },
+          },
+          {
+            path: 'investigations/:reference/evidence/:evidenceRef',
+            lazy: async () => {
+              const { EvidenceDetailPage } = await import('@/features/evidence/EvidenceDetailPage')
+              return { Component: () => guard(navItem('evidence'), <EvidenceDetailPage />) }
             },
           },
           {

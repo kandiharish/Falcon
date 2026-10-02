@@ -19,3 +19,11 @@ class ForbiddenError(DomainError):
 
 class ConflictError(DomainError):
     status_code = 409
+
+
+class InvalidInputError(DomainError):
+    status_code = 422
+
+
+class PayloadTooLargeError(DomainError):
+    status_code = 413

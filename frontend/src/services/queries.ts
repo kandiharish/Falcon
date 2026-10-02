@@ -13,6 +13,7 @@ import {
 import { AdminService } from './adminService'
 import { ApiError } from './apiClient'
 import { AuthService, type LoginInput } from './authService'
+import { EvidenceService, isProcessing, type EvidenceQuery, type NewEvidence } from './evidenceService'
 import {
   InvestigationService,
   type InvestigationChanges,
@@ -31,6 +32,10 @@ export const queryKeys = {
   members: (ref: string) => ['investigations', 'detail', ref, 'members'] as const,
   activity: (ref: string) => ['investigations', 'detail', ref, 'activity'] as const,
   assignableUsers: ['investigations', 'assignable-users'] as const,
+  evidence: (caseRef: string) => ['evidence', caseRef] as const,
+  evidenceList: (caseRef: string, query: EvidenceQuery) => ['evidence', caseRef, 'list', query] as const,
+  evidenceItem: (caseRef: string, ref: string) => ['evidence', caseRef, 'item', ref] as const,
+  evidenceHistory: (caseRef: string, ref: string) => ['evidence', caseRef, 'item', ref, 'history'] as const,
 }
 
 /** Any 401 means the session ended (expired, revoked, signed out elsewhere) → back to login. */
@@ -126,4 +131,55 @@ export const useAddMember = (reference: string) =>
   useMutation({
     mutationFn: (email: string) => InvestigationService.addMember(reference, email),
     onSuccess: refreshInvestigations,
+  })
+
+// ---------- Evidence ----------------------------------------------------------------------
+
+const POLL_MS = 2000 // while something is processing, ask for progress every 2 seconds
+
+export const useEvidenceList = (caseRef: string | null, query: EvidenceQuery = {}) =>
+  useQuery({
+    queryKey: queryKeys.evidenceList(caseRef ?? 'none', query),
+    queryFn: () => EvidenceService.list(caseRef as string, query),
+    enabled: caseRef !== null,
+    placeholderData: keepPreviousData,
+    refetchInterval: (q) => (q.state.data?.items.some(isProcessing) ? POLL_MS : false),
+  })
+
+export const useEvidence = (caseRef: string, ref: string) =>
+  useQuery({
+    queryKey: queryKeys.evidenceItem(caseRef, ref),
+    queryFn: () => EvidenceService.get(caseRef, ref),
+    refetchInterval: (q) => (q.state.data && isProcessing(q.state.data) ? POLL_MS : false),
+  })
+
+export const useEvidenceHistory = (caseRef: string, ref: string) =>
+  useQuery({
+    queryKey: queryKeys.evidenceHistory(caseRef, ref),
+    queryFn: () => EvidenceService.history(caseRef, ref),
+    staleTime: 0,
+  })
+
+/** Evidence changes affect evidence lists AND investigation counts. */
+const refreshEvidence = (caseRef: string) =>
+  Promise.all([
+    queryClient.invalidateQueries({ queryKey: queryKeys.evidence(caseRef) }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.investigations }),
+  ])
+
+export const useUploadEvidence = (caseRef: string) =>
+  useMutation({
+    mutationFn: ({ input, onProgress }: { input: NewEvidence; onProgress?: (p: number) => void }) =>
+      EvidenceService.upload(caseRef, input, onProgress),
+    onSuccess: () => refreshEvidence(caseRef),
+  })
+
+export const useEvidenceAction = (caseRef: string, ref: string) =>
+  useMutation({
+    mutationFn: (action: { kind: 'verify-integrity' } | { kind: 'reprocess' } | { kind: 'status'; status: 'verified' | 'requires_review' | 'processed'; note?: string }) => {
+      if (action.kind === 'verify-integrity') return EvidenceService.verifyIntegrity(caseRef, ref)
+      if (action.kind === 'reprocess') return EvidenceService.reprocess(caseRef, ref)
+      return EvidenceService.changeStatus(caseRef, ref, action.status, action.note)
+    },
+    onSuccess: () => refreshEvidence(caseRef),
   })

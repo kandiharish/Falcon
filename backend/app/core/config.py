@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     login_max_failures: int = 5
     login_lockout_minutes: int = 15
 
+    # --- Evidence storage ---
+    # Original evidence files live here (outside the code, ignored by Git).
+    storage_dir: Path = REPO_ROOT / "storage"
+    max_upload_mb: int = 250
+
     # Password for the fictional demo users created by the seed script (development only)
     demo_password: SecretStr | None = None
 
