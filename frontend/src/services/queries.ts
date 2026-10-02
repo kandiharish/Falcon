@@ -14,6 +14,7 @@ import { AdminService } from './adminService'
 import { CorrelationService, type CorrelationQuery } from './correlationService'
 import { GraphService, type GraphQuery } from './graphService'
 import { AIService } from './aiService'
+import { WorkService, type TaskInput } from './workService'
 import { ApiError } from './apiClient'
 import { AuthService, type LoginInput } from './authService'
 import { EvidenceService, isProcessing, type EvidenceQuery, type NewEvidence } from './evidenceService'
@@ -325,4 +326,42 @@ export const useReindex = (caseRef: string) =>
   useMutation({
     mutationFn: () => AIService.reindex(caseRef),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['similar', caseRef] }),
+  })
+
+// ---------- Tasks & notifications ------------------------------------------------------
+
+export const taskKeys = {
+  all: ['tasks'] as const,
+  forCase: (caseRef: string) => ['tasks', 'case', caseRef] as const,
+  mine: ['tasks', 'mine'] as const,
+}
+
+export const useTasks = (caseRef: string | null) =>
+  useQuery({
+    queryKey: taskKeys.forCase(caseRef ?? 'none'),
+    queryFn: () => WorkService.tasks(caseRef as string),
+    enabled: caseRef !== null,
+  })
+
+export const useMyTasks = () => useQuery({ queryKey: taskKeys.mine, queryFn: WorkService.myTasks })
+
+export const useSaveTask = (caseRef: string) =>
+  useMutation({
+    mutationFn: ({ reference, input }: { reference?: string; input: TaskInput }) =>
+      reference ? WorkService.updateTask(caseRef, reference, input) : WorkService.createTask(caseRef, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: taskKeys.all }),
+  })
+
+export const useNotifications = () =>
+  useQuery({
+    queryKey: ['notifications'],
+    queryFn: WorkService.notifications,
+    refetchInterval: 30_000, // a light poll; notifications are not urgent to the second
+    refetchIntervalInBackground: false,
+  })
+
+export const useMarkNotificationsRead = () =>
+  useMutation({
+    mutationFn: (id: string | null) => (id ? WorkService.markRead(id) : WorkService.markAllRead()),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
   })

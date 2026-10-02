@@ -20,7 +20,7 @@ from app.models import AuditLog, Investigation, InvestigationMember, User
 from app.repositories import investigation_repository as repo
 from app.repositories.investigation_repository import InvestigationFilters
 from app.security.permissions import Permission, Role, permissions_for
-from app.services import audit_service
+from app.services import audit_service, notification_service
 from app.services.errors import ConflictError, ForbiddenError, InvalidInputError, NotFoundError
 from app.services.request_context import RequestContext
 
@@ -62,7 +62,7 @@ def case_zone(investigation: Investigation) -> ZoneInfo:
     return ZoneInfo(investigation.time_zone or "UTC")
 
 
-def _sees_all(user: User) -> bool:
+def sees_all(user: User) -> bool:
     return user.role == Role.SUPERVISOR
 
 
@@ -80,11 +80,11 @@ class NewInvestigation:
 def list_investigations(
     db: Session, user: User, filters: InvestigationFilters, limit: int, offset: int
 ) -> tuple[list[Investigation], int]:
-    return repo.list_visible(db, user.id, _sees_all(user), filters, limit, offset)
+    return repo.list_visible(db, user.id, sees_all(user), filters, limit, offset)
 
 
 def get_investigation(db: Session, user: User, reference: str) -> Investigation:
-    investigation = repo.get_visible(db, user.id, _sees_all(user), reference)
+    investigation = repo.get_visible(db, user.id, sees_all(user), reference)
     if investigation is None:
         raise NotFoundError(NOT_FOUND)
     return investigation
@@ -93,7 +93,7 @@ def get_investigation(db: Session, user: User, reference: str) -> Investigation:
 def _require_can_edit(db: Session, user: User, investigation: Investigation) -> None:
     if Permission.INVESTIGATION_WRITE not in permissions_for(user.role):
         raise ForbiddenError("Your role cannot change investigations.")
-    if not _sees_all(user) and repo.membership(db, investigation.id, user.id) is None:
+    if not sees_all(user) and repo.membership(db, investigation.id, user.id) is None:
         raise ForbiddenError("Only members of the investigation team can change it.")
 
 
@@ -199,6 +199,16 @@ def add_member(
         object_id=investigation.reference,
         new_state={"member": new_member.email, "role_in_case": "member"},
         context=context,
+    )
+    notification_service.notify(
+        db,
+        new_member.id,
+        "investigation_assigned",
+        f"Added to {investigation.reference}",
+        body=f"{user.display_name} added you to “{investigation.title}”.",
+        link=f"/investigations/{investigation.reference}",
+        investigation_id=investigation.id,
+        actor=user,
     )
     db.commit()
     db.refresh(membership)

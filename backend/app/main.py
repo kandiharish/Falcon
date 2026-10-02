@@ -14,6 +14,7 @@ from app.api import (
     graph,
     health,
     investigations,
+    work,
 )
 from app.core.config import get_settings
 from app.security.csrf import CSRFHeaderMiddleware
@@ -52,6 +53,7 @@ def create_app() -> FastAPI:
     app.include_router(correlations.router, prefix="/api")
     app.include_router(graph.router, prefix="/api")
     app.include_router(ai.router, prefix="/api")
+    app.include_router(work.router, prefix="/api")
     return app
 
 

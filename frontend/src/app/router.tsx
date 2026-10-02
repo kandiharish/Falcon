@@ -57,6 +57,10 @@ const builtPages: Record<string, RouteObject['lazy']> = {
     const { AnalysisPage } = await import('@/features/analysis/AnalysisPage')
     return { Component: () => guard(navItem('analysis'), <AnalysisPage />) }
   },
+  tasks: async () => {
+    const { TasksPage } = await import('@/features/tasks/TasksPage')
+    return { Component: () => guard(navItem('tasks'), <TasksPage />) }
+  },
   admin: async () => {
     const { UsersPage } = await import('@/features/admin/UsersPage')
     return { Component: () => guard(navItem('admin'), <UsersPage />) }

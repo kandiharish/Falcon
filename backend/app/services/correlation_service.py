@@ -29,7 +29,7 @@ from app.models import (
 )
 from app.repositories import reference_counters
 from app.security.permissions import Permission, Role, permissions_for
-from app.services import audit_service, investigation_service
+from app.services import audit_service, investigation_service, notification_service
 from app.services.errors import ForbiddenError, InvalidInputError, NotFoundError
 from app.services.request_context import RequestContext
 
@@ -126,6 +126,21 @@ def run_for_case(
             stale += 1
 
     total = len(results)
+    if created:
+        new_levels = [
+            r.level for r in results if (r.evidence_a.id, r.evidence_b.id) not in existing
+        ]
+        strong = sum(1 for level in new_levels if level in ("high", "medium"))
+        notification_service.notify(
+            db,
+            case.lead_investigator_id,
+            "correlation_detected",
+            f"New potential relationships in {case.reference}",
+            body=f"{created} found ({strong} medium or high). They need analyst review.",
+            link="/correlations",
+            investigation_id=case.id,
+            actor=actor,
+        )
     audit_service.record(
         db,
         "correlation.run",

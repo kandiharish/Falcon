@@ -373,3 +373,39 @@ export type AssistantEvent =
   | { type: 'tool_result'; name: string; arguments: Record<string, unknown>; summary: string; duration_ms: number }
   | { type: 'answer'; text: string; citations: Citation[]; steps: number; model: string; duration_ms: number }
   | { type: 'error'; message: string }
+
+export interface Task {
+  reference: string // T-001
+  investigationReference: string
+  investigationTitle: string
+  title: string
+  description: string
+  status: TaskStatus
+  priority: Priority
+  assignee: { id: string; displayName: string } | null
+  dueDate: string | null // YYYY-MM-DD
+  evidence: string[]
+  createdBy: { id: string; displayName: string }
+  createdAt: string
+  updatedAt: string
+  completedAt: string | null
+}
+
+export type NotificationKind =
+  | 'processing_completed'
+  | 'processing_failed'
+  | 'requires_review'
+  | 'correlation_detected'
+  | 'task_assigned'
+  | 'investigation_assigned'
+  | 'report_ready'
+
+export interface AppNotification {
+  id: string
+  kind: NotificationKind
+  title: string
+  body: string
+  link: string
+  createdAt: string
+  read: boolean
+}

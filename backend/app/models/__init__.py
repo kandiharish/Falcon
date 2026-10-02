@@ -7,6 +7,7 @@ from app.models.evidence import Evidence, EvidenceReferenceCounter, ProcessingJo
 from app.models.extraction import Entity, EntityMention, Event, EventParticipant
 from app.models.investigation import Investigation, InvestigationMember, ReferenceCounter
 from app.models.user import User, UserSession
+from app.models.work import Notification, Task
 
 __all__ = [
     "AuditLog",
@@ -20,8 +21,10 @@ __all__ = [
     "EvidenceReferenceCounter",
     "Investigation",
     "InvestigationMember",
+    "Notification",
     "ProcessingJob",
     "ReferenceCounter",
+    "Task",
     "User",
     "UserSession",
 ]
