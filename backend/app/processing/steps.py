@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 
 from PIL import ExifTags, Image, UnidentifiedImageError
 
+from app.ai.provider import AIUnavailable
 from app.extraction.text import has_document_text
 from app.models import Evidence
 from app.processing.extraction_steps import (
@@ -21,6 +22,7 @@ from app.processing.extraction_steps import (
     is_video,
 )
 from app.processing.pipeline import Step, StepContext, StepFailed, merge_metadata
+from app.services import ai_index_service
 from app.storage import local as storage
 
 PREVIEW_MAX_PX = 1024
@@ -149,6 +151,24 @@ def build_image_preview(ctx: StepContext) -> str:
 TEXT_MEDIA_TYPES = {"application/json", "application/xml", "application/gpx+xml"}
 
 
+def fingerprint_image(ctx: StepContext) -> str:
+    """Perceptual hash for near-duplicate detection (no AI: a fixed algorithm)."""
+    value = ai_index_service.fingerprint_image(ctx.evidence)
+    return f"Fingerprint {value}."
+
+
+def index_for_similarity(ctx: StepContext) -> str:
+    """Embed the document's text so similar documents can be found. Needs the local AI;
+    if it is not running the step is skipped, never failed: processing must not depend on AI."""
+    if not ctx.text or not ctx.text.strip():
+        return "No text to index."
+    try:
+        count = ai_index_service.index_text(ctx.db, ctx.evidence, ctx.text)
+    except AIUnavailable:
+        return "Skipped: the local AI service is not running. Use “Rebuild AI index” later."
+    return f"Indexed {count} passage{'s' if count != 1 else ''} for similarity search."
+
+
 def is_image(evidence: Evidence) -> bool:
     return evidence.media_type.startswith("image/")
 
@@ -171,6 +191,8 @@ STEPS: list[Step] = [
     Step("document_text", "Text extraction", extract_document_text, has_document_text),
     Step("entities_events", "Entity & event extraction", extract_entities_and_events),
     Step("image_preview", "Preview generation", build_image_preview, is_image),
+    Step("image_fingerprint", "Image fingerprint", fingerprint_image, is_image),
+    Step("similarity_index", "AI similarity index", index_for_similarity, has_document_text),
 ]
 
 

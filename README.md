@@ -24,12 +24,16 @@ phase-by-phase learning notes are in [docs/learning/](docs/learning/).
 | P7 Timeline, map, investigation time zones | ✅ |
 | P8 Correlation engine: explainable scores, analyst review | ✅ |
 | P9 Relationship graph: explainable links, focus, list view | ✅ |
-| P10 AI: search, similarity, Investigation Assistant agent | next |
+| P10 Local AI: plain-words search, similar evidence, Investigation Assistant agent | ✅ |
+| P11 Reports, dashboard, global search, audit UI, MFA | next |
 
 ## Prerequisites
 
 - Git, Node.js 22+, Python 3.12+, [uv](https://docs.astral.sh/uv/)
 - Docker Desktop (with WSL 2 on Windows)
+- Optional, for AI features: [Ollama](https://ollama.com), then `ollama pull qwen3:8b` (5.2 GB) and
+  `ollama pull all-minilm` (46 MB). Everything runs locally; without Ollama, FALCON still works and
+  search falls back to simple rules.
 
 ## Start the local infrastructure
 

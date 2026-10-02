@@ -63,7 +63,13 @@ def test_processing_extracts_exif_without_overwriting_user_values(team):
     assert body["file_metadata"]["image"]["provenance"]["latitude"].startswith("extracted")
     assert body["integrity_ok"] is True
     steps = [s["name"] for s in body["latest_job"]["steps"]]
-    assert steps == ["integrity", "image_metadata", "entities_events", "image_preview"]
+    assert steps == [
+        "integrity",
+        "image_metadata",
+        "entities_events",
+        "image_preview",
+        "image_fingerprint",
+    ]
     assert body["latest_job"]["progress"] == 100
 
     preview = team["officer"].get(f"/api/investigations/{case}/evidence/IMG-001/preview")

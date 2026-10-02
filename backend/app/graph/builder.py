@@ -405,3 +405,34 @@ def _neighbourhood(
         {k: v for k, v in nodes.items() if k in seen},
         [e for e in edges if e.source in seen and e.target in seen],
     )
+
+
+def shortest_path(edges: list[Edge], start: str, goal: str, max_steps: int = 6) -> list[Edge]:
+    """The fewest links from `start` to `goal` (BFS), or [] when they are not connected."""
+    if start == goal:
+        return []
+    links: dict[str, list[tuple[str, Edge]]] = {}
+    for e in edges:
+        links.setdefault(e.source, []).append((e.target, e))
+        links.setdefault(e.target, []).append((e.source, e))
+    came_from: dict[str, tuple[str, Edge]] = {}
+    seen = {start}
+    queue = deque([(start, 0)])
+    while queue:
+        current, steps = queue.popleft()
+        if steps == max_steps:
+            continue
+        for nxt, edge in links.get(current, ()):
+            if nxt in seen:
+                continue
+            seen.add(nxt)
+            came_from[nxt] = (current, edge)
+            if nxt == goal:
+                path: list[Edge] = []
+                node = goal
+                while node != start:
+                    node, step = came_from[node]
+                    path.append(step)
+                return path[::-1]
+            queue.append((nxt, steps + 1))
+    return []

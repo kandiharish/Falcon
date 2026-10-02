@@ -44,6 +44,15 @@ class Settings(BaseSettings):
     default_phone_region: str = "IN"
     ocr_enabled: bool = True
 
+    # --- Local AI (Ollama) ---
+    # Everything runs on this computer: evidence is never sent to a cloud service.
+    ai_enabled: bool = True
+    ollama_url: str = "http://127.0.0.1:11434"
+    ai_chat_model: str = "qwen3:8b"  # tool calling + JSON output; fallback: qwen3:4b
+    ai_embed_model: str = "all-minilm"  # all-MiniLM-L6-v2, 384-number vectors
+    ai_timeout_seconds: int = 300  # CPU-only machines are slow; be patient
+    assistant_max_steps: int = 8
+
     # Password for the fictional demo users created by the seed script (development only)
     demo_password: SecretStr | None = None
 

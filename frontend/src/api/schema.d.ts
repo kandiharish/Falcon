@@ -543,10 +543,120 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ai/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Status */
+        get: operations["status_api_ai_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/ai/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Search */
+        post: operations["search_api_investigations__case_reference__ai_search_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/evidence/{evidence_reference}/similar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Similar */
+        get: operations["similar_api_investigations__case_reference__evidence__evidence_reference__similar_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/ai/reindex": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reindex */
+        post: operations["reindex_api_investigations__case_reference__ai_reindex_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/assistant": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask
+         * @description Streams newline-delimited JSON events: status, tool_start, tool_result, answer, error.
+         */
+        post: operations["ask_api_investigations__case_reference__assistant_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AIStatusOut */
+        AIStatusOut: {
+            /** Available */
+            available: boolean;
+            /** Chat Model */
+            chat_model: string;
+            /** Embed Model */
+            embed_model: string;
+            /** Chat Model Ready */
+            chat_model_ready: boolean;
+            /** Embed Model Ready */
+            embed_model_ready: boolean;
+            /** Message */
+            message: string;
+        };
+        /** AskIn */
+        AskIn: {
+            /** Question */
+            question: string;
+            /** History */
+            history?: components["schemas"]["Turn"][];
+        };
         /** AssignableUser */
         AssignableUser: {
             /**
@@ -789,6 +899,17 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** EntityBrief */
+        EntityBrief: {
+            /** Reference */
+            reference: string;
+            /** Entity Type */
+            entity_type: string;
+            /** Label */
+            label: string;
+            /** Review Status */
+            review_status: string;
+        };
         /** EntityCreate */
         EntityCreate: {
             /**
@@ -993,6 +1114,15 @@ export interface components {
             items: components["schemas"]["EventOut"][];
             /** Total */
             total: number;
+        };
+        /** EvidenceBrief */
+        EvidenceBrief: {
+            /** Reference */
+            reference: string;
+            /** Evidence Type */
+            evidence_type: string;
+            /** Description */
+            description: string;
         };
         /** EvidenceOut */
         EvidenceOut: {
@@ -1427,6 +1557,14 @@ export interface components {
              */
             role: string;
         };
+        /** Passage */
+        Passage: {
+            evidence: components["schemas"]["EvidenceBrief"];
+            /** Score */
+            score: number;
+            /** Passage */
+            passage: string;
+        };
         /** PersonRef */
         PersonRef: {
             /**
@@ -1436,6 +1574,15 @@ export interface components {
             id: string;
             /** Display Name */
             display_name: string;
+        };
+        /** ReindexOut */
+        ReindexOut: {
+            /** Documents */
+            documents: number;
+            /** Chunks */
+            chunks: number;
+            /** Images */
+            images: number;
         };
         /** Review */
         Review: {
@@ -1460,6 +1607,104 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** SearchIn */
+        SearchIn: {
+            /** Question */
+            question: string;
+        };
+        /** SearchOut */
+        SearchOut: {
+            /** Question */
+            question: string;
+            plan: components["schemas"]["SearchPlan"];
+            /** Summary */
+            summary: string;
+            /** Notes */
+            notes: string[];
+            /** Interpreted By */
+            interpreted_by: string;
+            /** Duration Ms */
+            duration_ms: number;
+            /** Events */
+            events: components["schemas"]["EventOut"][];
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceBrief"][];
+            /** Entities */
+            entities: components["schemas"]["EntityBrief"][];
+            /** Path */
+            path: components["schemas"]["EdgeOut"][];
+            /** Path Nodes */
+            path_nodes: components["schemas"]["NodeOut"][];
+            /** Passages */
+            passages: components["schemas"]["Passage"][];
+        };
+        /** SearchPlan */
+        SearchPlan: {
+            /**
+             * Intent
+             * @description events = things that happened; evidence = files; entities = people, phones, vehicles…; connection = how two items are linked; text = find passages about a topic in documents
+             * @enum {string}
+             */
+            intent: "events" | "evidence" | "entities" | "connection" | "text";
+            /**
+             * Entity Refs
+             * @description IDs like P001, V001
+             */
+            entity_refs?: string[];
+            /**
+             * Evidence Refs
+             * @description IDs like CCTV-001
+             */
+            evidence_refs?: string[];
+            /** Event Types */
+            event_types?: string[];
+            /** Evidence Types */
+            evidence_types?: string[];
+            /** Entity Types */
+            entity_types?: string[];
+            /**
+             * Date From
+             * @description YYYY-MM-DD
+             */
+            date_from?: string | null;
+            /**
+             * Date To
+             * @description YYYY-MM-DD
+             */
+            date_to?: string | null;
+            /**
+             * Time From
+             * @description HH:MM, 24-hour, time of day
+             */
+            time_from?: string | null;
+            /**
+             * Time To
+             * @description HH:MM, 24-hour, time of day
+             */
+            time_to?: string | null;
+            /**
+             * Text
+             * @description topic words to look for in documents
+             */
+            text?: string | null;
+        };
+        /** SimilarOut */
+        SimilarOut: {
+            evidence: components["schemas"]["EvidenceBrief"];
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "image" | "text";
+            /** Score */
+            score: number;
+            /** Explanation */
+            explanation: string;
+            /** Passage */
+            passage: string;
+            /** Match */
+            match: string;
+        };
         /** StatusChange */
         StatusChange: {
             /**
@@ -1469,6 +1714,16 @@ export interface components {
             status: "processed" | "verified" | "requires_review";
             /** Note */
             note?: string | null;
+        };
+        /** Turn */
+        Turn: {
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "user" | "assistant";
+            /** Content */
+            content: string;
         };
         /** UserSummary */
         UserSummary: {
@@ -2698,6 +2953,159 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GraphOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    status_api_ai_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AIStatusOut"];
+                };
+            };
+        };
+    };
+    search_api_investigations__case_reference__ai_search_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SearchIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    similar_api_investigations__case_reference__evidence__evidence_reference__similar_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+                evidence_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimilarOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reindex_api_investigations__case_reference__ai_reindex_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReindexOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ask_api_investigations__case_reference__assistant_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AskIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

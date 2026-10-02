@@ -36,6 +36,7 @@ import { auditActionLabels, evidenceTypeTerms } from '@/design-system/vocabulary
 import { formatBytes, formatDateTime } from '@/lib/format'
 import { ExtractedTab } from '@/features/extraction/ExtractedTab'
 import { CorrelationsTab } from '@/features/correlations/CorrelationsTab'
+import { SimilarTab } from '@/features/analysis/SimilarTab'
 
 /** Evidence detail workspace (plan §12). */
 export function EvidenceDetailPage() {
@@ -119,6 +120,7 @@ export function EvidenceDetailPage() {
           <TabsTrigger value="preview">Preview</TabsTrigger>
           <TabsTrigger value="extracted">Extracted information</TabsTrigger>
           <TabsTrigger value="correlations">Correlations</TabsTrigger>
+          <TabsTrigger value="similar">Similar</TabsTrigger>
           <TabsTrigger value="metadata">Metadata</TabsTrigger>
           <TabsTrigger value="processing">Processing</TabsTrigger>
           <TabsTrigger value="integrity">Integrity</TabsTrigger>
@@ -130,6 +132,7 @@ export function EvidenceDetailPage() {
         </TabsContent>
         <TabsContent value="preview" className="pt-4"><PreviewTab evidence={evidence} caseRef={caseRef} /></TabsContent>
         <TabsContent value="correlations" className="pt-4"><CorrelationsTab caseRef={caseRef} evidenceRef={evidence.reference} /></TabsContent>
+        <TabsContent value="similar" className="pt-4"><SimilarTab caseRef={caseRef} evidenceRef={evidence.reference} /></TabsContent>
         <TabsContent value="metadata" className="pt-4"><MetadataTab evidence={evidence} /></TabsContent>
         <TabsContent value="processing" className="pt-4"><ProcessingTab evidence={evidence} /></TabsContent>
         <TabsContent value="integrity" className="pt-4"><IntegrityTab evidence={evidence} caseRef={caseRef} /></TabsContent>

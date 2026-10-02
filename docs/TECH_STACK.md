@@ -14,7 +14,7 @@ Legend: ✅ in use now · 🔜 planned (phase)
  ┌───────────────────────────────▼────────────────────────────────────────────┐
  │ BACKEND   Python 3.12 · FastAPI · Pydantic · SQLAlchemy 2 · Alembic          │
  │           Worker process (Postgres job queue) · processing plugins          │
- │           AI: Tesseract · spaCy · sentence-transformers · Ollama (Qwen3)    │
+ │           AI: RapidOCR · spaCy · Ollama (all-MiniLM + Qwen3) · pgvector     │
  └───────────────┬───────────────────────────────┬────────────────────────────┘
                  │                               │
  ┌───────────────▼──────────────┐   ┌────────────▼───────────────┐
@@ -78,7 +78,7 @@ Legend: ✅ in use now · 🔜 planned (phase)
 |---|---|---|---|---|
 | PostgreSQL | 17.5 | ✅ P0 | Main database | Relational data (case → evidence → entity → event). MongoDB suits documents, not relationships. |
 | PostGIS | 3.5 | ✅ P0, used P7 | Geo queries: `ST_DWithin` on geography points ("events within 100 m") | Real distances on the Earth's surface, in one SQL line. |
-| pgvector | 0.8 | ✅ P0 | Vector similarity search | Duplicate/similar evidence without a separate vector DB. |
+| pgvector (+ `pgvector` Python 0.5) | 0.8 | ✅ P0, used P10 | Vector similarity search: `evidence_chunks.embedding vector(384)` with an HNSW cosine index | Similar evidence and meaning-based search without a separate vector DB. |
 | pg_trgm | 1.6 | ✅ P0 | Fuzzy text search | "CCTV-01" finds "CCTV-001". Replaces Elasticsearch for our scale. |
 | Graph in PostgreSQL | — | ✅ P9 | Graph = a view over mentions, event participants and correlations, built per request by a pure Python builder (BFS for focus) | One database = no sync problems, no copy that can go stale. Neo4j only if cases ever reach millions of links. |
 | Docker Desktop + Compose | 29 / v5 | ✅ P0 | Runs PostgreSQL in a container | Same setup on any machine; nothing installed into Windows. |
@@ -101,9 +101,9 @@ AI **suggests**, humans **decide**. Every AI output is labelled (Extracted / Det
 | Names, places, organisations in text | **spaCy 3.8 `en_core_web_sm` 3.8.0** | Named-entity recognition model | ~12 MB | ✅ P6 | Small, fast on CPU. Results are DETECTED (≤0.6 confidence) and filtered: names must be capitalised. Upgradeable to `en_core_web_trf`. |
 | Phone numbers, emails, plates, account IDs | **`phonenumbers`** (port of Google libphonenumber) + patterns | Rules (no ML) | — | ✅ P6 | Explainable; numbers normalised to E.164 so the same phone in two files becomes one entity. |
 | Structured records (calls, GPS, transactions, plates) | **FALCON CSV extractors** with column aliases | Rules (no ML) | — | ✅ P6 | Rows become EXTRACTED entities and events (0.95; 0.8 when a time has no zone). |
-| Text similarity / duplicate documents | **sentence-transformers `all-MiniLM-L6-v2`** | Embedding model (384-dim vectors) | ~90 MB | 🔜 P10 | Small, CPU-friendly; vectors stored in pgvector. |
-| Near-duplicate images | **imagehash** (perceptual hash) | Algorithm (no ML) | — | 🔜 P10 | Detects resized/re-encoded copies. |
-| Natural-language search, summaries, Investigation Assistant agent | **Qwen3 8B** (`qwen3:8b`) via **Ollama** | Large language model with tool calling | ~5 GB (4-bit) | 🔜 P10 | Runs on 16 GB RAM; good tool calling. Fallback: `qwen3:4b` (~2.5 GB) on weaker machines. |
+| Text similarity, meaning-based search | **`all-minilm`** (= all-MiniLM-L6-v2) served by **Ollama** | Embedding model (384-dim vectors) | 46 MB | ✅ P10 | *Changed:* served by Ollama instead of sentence-transformers, so no 2 GB PyTorch install; one AI runtime for everything. ~0.2 s per search on CPU. |
+| Near-duplicate images | **Own dHash** (difference hash, ~15 lines with Pillow) | Algorithm (no ML) | — | ✅ P10 | *Changed:* `imagehash` needs SciPy (~40 MB); dHash is enough to catch resized/re-saved copies (≤ 10 of 64 bits differ). |
+| Natural-language search, Investigation Assistant agent | **Qwen3 8B** (`qwen3:8b`) via **Ollama 0.35** | Large language model: tool calling + JSON-schema output | 5.2 GB (4-bit) | ✅ P10 | Measured on this laptop (CPU only): search ~8 s warm; agent 1–3 min per answer, all citations verified. `qwen3:4b` was tested and rejected: it ignored the answer rules as an agent. Thinking mode off; replies capped at 700 tokens. |
 | Correlation scoring | **FALCON correlation engine** (our own Python rules) | Deterministic scoring, no ML | — | ✅ P8 | Same input → same output; every score explained factor by factor. Entity 0.45 · time 0.30 (30 min) · place 0.25 (500 m, haversine). |
 
 **Deliberately not used:** face recognition (ethically risky, biased, plan §52) and any cloud AI

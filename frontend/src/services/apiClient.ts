@@ -39,30 +39,75 @@ async function request<T>(method: Method, path: string, body?: unknown): Promise
     throw new ApiError(0, UNREACHABLE_MESSAGE)
   }
 
-  if (GATEWAY_STATUSES.has(response.status)) {
-    throw new ApiError(response.status, UNREACHABLE_MESSAGE)
-  }
-  if (!response.ok) {
-    throw new ApiError(response.status, await readErrorMessage(response))
-  }
+  await throwIfFailed(response)
   if (response.status === 204) return undefined as T
   return (await response.json()) as T
 }
 
-/** The API sends human-readable messages in `detail`; fall back to a generic one. */
-async function readErrorMessage(response: Response): Promise<string> {
+async function throwIfFailed(response: Response): Promise<void> {
+  if (response.ok) return
+  const detail = await readDetail(response)
+  // A 503 WITH a message comes from FALCON itself (e.g. "start the local AI service");
+  // without one it comes from the proxy: the API is down.
+  if (GATEWAY_STATUSES.has(response.status)) throw new ApiError(response.status, detail ?? UNREACHABLE_MESSAGE)
+  throw new ApiError(
+    response.status,
+    detail ?? `The request could not be completed (code ${response.status}). Try again in a moment.`,
+  )
+}
+
+/** The API sends human-readable messages in `detail`. */
+async function readDetail(response: Response): Promise<string | null> {
   try {
     const data = (await response.json()) as { detail?: unknown }
     if (typeof data.detail === 'string') return data.detail
   } catch {
     // not JSON
   }
-  return `The request could not be completed (code ${response.status}). Try again in a moment.`
+  return null
 }
 
 export const apiGet = <T>(path: string) => request<T>('GET', path)
 export const apiPost = <T>(path: string, body?: unknown) => request<T>('POST', path, body)
 export const apiPatch = <T>(path: string, body: unknown) => request<T>('PATCH', path, body)
+
+/**
+ * POST, then read a streamed reply of newline-delimited JSON (NDJSON) as it arrives:
+ * each complete line is one event. Used by the Investigation Assistant, which can take
+ * minutes on a CPU and reports every step while it works.
+ */
+export async function* apiStream<E>(path: string, body: unknown, signal?: AbortSignal): AsyncGenerator<E> {
+  let response: Response
+  try {
+    response = await fetch(`/api${path}`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'X-FALCON-Request': '1', 'Content-Type': 'application/json', Accept: 'application/x-ndjson' },
+      body: JSON.stringify(body),
+      signal,
+    })
+  } catch (error) {
+    if (signal?.aborted) return
+    throw error instanceof ApiError ? error : new ApiError(0, UNREACHABLE_MESSAGE)
+  }
+  await throwIfFailed(response)
+  if (!response.body) return
+  const reader = response.body.pipeThrough(new TextDecoderStream()).getReader()
+  let buffer = ''
+  while (true) {
+    const { value, done } = await reader.read()
+    if (done) break
+    buffer += value
+    let newline = buffer.indexOf('\n')
+    while (newline >= 0) {
+      const line = buffer.slice(0, newline).trim()
+      buffer = buffer.slice(newline + 1)
+      if (line) yield JSON.parse(line) as E
+      newline = buffer.indexOf('\n')
+    }
+  }
+  if (buffer.trim()) yield JSON.parse(buffer) as E
+}
 
 /**
  * Upload a form with a file and report progress (0–100).

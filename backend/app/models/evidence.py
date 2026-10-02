@@ -94,6 +94,9 @@ class Evidence(Base):
     # Results of processing: technical metadata, extracted values, derived files
     file_metadata: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     preview_key: Mapped[str | None] = mapped_column(String(300))
+    # 64-bit "difference hash" of an image as 16 hex digits: near-identical pictures have
+    # hashes that differ in only a few bits, even after resizing or re-compression.
+    perceptual_hash: Mapped[str | None] = mapped_column(String(16))
 
     uploaded_by_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(

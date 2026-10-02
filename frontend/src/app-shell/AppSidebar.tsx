@@ -17,7 +17,7 @@ import { findNavItem, visibleNavigation } from '@/app/navigation'
 import { useCurrentUser } from '@/services/queries'
 import { FalconMark } from './FalconMark'
 
-const CURRENT_PHASE = 9
+const CURRENT_PHASE = 10
 
 export function AppSidebar() {
   const { pathname } = useLocation()

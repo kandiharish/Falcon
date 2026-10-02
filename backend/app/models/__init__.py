@@ -1,5 +1,6 @@
 """All ORM models, imported here so Alembic sees every table."""
 
+from app.models.ai import EvidenceChunk
 from app.models.audit import AuditLog
 from app.models.correlation import Correlation
 from app.models.evidence import Evidence, EvidenceReferenceCounter, ProcessingJob
@@ -15,6 +16,7 @@ __all__ = [
     "Event",
     "EventParticipant",
     "Evidence",
+    "EvidenceChunk",
     "EvidenceReferenceCounter",
     "Investigation",
     "InvestigationMember",

@@ -353,3 +353,23 @@ export interface RelationshipGraph {
   totalEdges: number
   truncated: boolean
 }
+
+/** One turn of a conversation with the Investigation Assistant. */
+export interface AssistantTurn {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export interface Citation {
+  reference: string
+  /** true = a tool returned this ID while answering; false = possibly invented, check it. */
+  verified: boolean
+}
+
+/** What the assistant streams while it works (one JSON object per line). */
+export type AssistantEvent =
+  | { type: 'status'; message: string }
+  | { type: 'tool_start'; name: string; arguments: Record<string, unknown> }
+  | { type: 'tool_result'; name: string; arguments: Record<string, unknown>; summary: string; duration_ms: number }
+  | { type: 'answer'; text: string; citations: Citation[]; steps: number; model: string; duration_ms: number }
+  | { type: 'error'; message: string }

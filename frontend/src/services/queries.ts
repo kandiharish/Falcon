@@ -13,6 +13,7 @@ import {
 import { AdminService } from './adminService'
 import { CorrelationService, type CorrelationQuery } from './correlationService'
 import { GraphService, type GraphQuery } from './graphService'
+import { AIService } from './aiService'
 import { ApiError } from './apiClient'
 import { AuthService, type LoginInput } from './authService'
 import { EvidenceService, isProcessing, type EvidenceQuery, type NewEvidence } from './evidenceService'
@@ -307,4 +308,21 @@ export const useGraph = (caseRef: string | null, query: GraphQuery = {}) =>
     queryFn: () => GraphService.get(caseRef as string, query),
     enabled: caseRef !== null,
     placeholderData: keepPreviousData,
+  })
+
+// ---------- AI (local, Ollama) ----------------------------------------------------------
+
+export const useAIStatus = () =>
+  useQuery({ queryKey: ['ai', 'status'], queryFn: AIService.status, staleTime: 30_000, retry: false })
+
+export const useAISearch = (caseRef: string) =>
+  useMutation({ mutationFn: (question: string) => AIService.search(caseRef, question) })
+
+export const useSimilarEvidence = (caseRef: string, evidenceRef: string) =>
+  useQuery({ queryKey: ['similar', caseRef, evidenceRef], queryFn: () => AIService.similar(caseRef, evidenceRef) })
+
+export const useReindex = (caseRef: string) =>
+  useMutation({
+    mutationFn: () => AIService.reindex(caseRef),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['similar', caseRef] }),
   })

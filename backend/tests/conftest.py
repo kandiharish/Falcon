@@ -88,3 +88,15 @@ def team(make_user):
     case = create_case(officer)["reference"]
     officer.post(f"/api/investigations/{case}/members", json={"email": analyst_user.email})
     return {"officer": officer, "analyst": signed_in(analyst_user), "case": case}
+
+
+@pytest.fixture(autouse=True)
+def offline_ai() -> Iterator[None]:
+    """By default tests run as if Ollama were not running: fast, offline, predictable.
+    Tests that need AI swap in a FakeProvider (tests/fake_ai.py)."""
+    from app.ai import provider
+    from tests.fake_ai import OfflineProvider
+
+    provider.use(OfflineProvider())
+    yield
+    provider.use(None)

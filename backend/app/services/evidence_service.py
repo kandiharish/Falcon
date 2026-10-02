@@ -94,7 +94,7 @@ def upload(
     db: Session, user: User, case_reference: str, data: EvidenceUpload, context: RequestContext
 ) -> Evidence:
     investigation = investigation_service.get_investigation(db, user, case_reference)
-    _require_team_member(db, user, investigation)
+    require_team_member(db, user, investigation)
     if investigation.status in ("closed", "archived"):
         raise ConflictError(
             f"The investigation is {investigation.status}; new evidence cannot be added."
@@ -199,7 +199,7 @@ def _validate_coordinates(latitude: float | None, longitude: float | None) -> No
         raise InvalidInputError("Longitude must be between -180 and 180.")
 
 
-def _require_team_member(db: Session, user: User, investigation: Investigation) -> None:
+def require_team_member(db: Session, user: User, investigation: Investigation) -> None:
     if user.role == Role.SUPERVISOR:
         return
     if investigation_service.repo.membership(db, investigation.id, user.id) is None:
@@ -351,7 +351,7 @@ def change_status(
     if Permission.EVIDENCE_VERIFY not in permissions_for(user.role):
         raise ForbiddenError("Your role cannot verify evidence.")
     evidence = get_evidence(db, user, case_reference, evidence_reference)
-    _require_team_member(db, user, evidence.investigation)
+    require_team_member(db, user, evidence.investigation)
     allowed = STATUS_TRANSITIONS.get(evidence.status, set())
     if new_status not in allowed:
         raise ConflictError(
@@ -385,7 +385,7 @@ def reprocess(
     db: Session, user: User, case_reference: str, evidence_reference: str, context: RequestContext
 ) -> Evidence:
     evidence = get_evidence(db, user, case_reference, evidence_reference)
-    _require_team_member(db, user, evidence.investigation)
+    require_team_member(db, user, evidence.investigation)
     latest = evidence.jobs[-1] if evidence.jobs else None
     if latest and latest.status in ("queued", "running"):
         raise ConflictError("This evidence is already waiting for or being processed.")
