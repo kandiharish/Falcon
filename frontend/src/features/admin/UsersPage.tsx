@@ -1,4 +1,14 @@
-import { KeyRound, Lock, ShieldCheck, ShieldOff, UserCheck, UserX, Users } from 'lucide-react'
+import { useState } from 'react'
+import { KeyRound, Lock, LockOpen, MoreHorizontal, Pencil, ShieldCheck, ShieldOff, UserCheck, UserPlus, UserX, Users } from 'lucide-react'
+import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -11,7 +21,9 @@ import {
 } from '@/components/ui/table'
 import type { UserSummary } from '@/domain/types'
 import { ApiError } from '@/services/apiClient'
-import { useUsers } from '@/services/queries'
+import { can } from '@/services/authService'
+import { useCurrentUser, useUserAdmin, useUsers } from '@/services/queries'
+import { UserDialogs, type UserDialogState } from './UserDialogs'
 import { PageHeader } from '@/design-system/PageHeader'
 import { EmptyState, ErrorState } from '@/design-system/states'
 import { toneBadgeClass, type Tone } from '@/design-system/tones'
@@ -19,9 +31,12 @@ import { roleLabels } from '@/design-system/vocabulary'
 import { formatDateTime } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
-/** Administration → Users (plan §31). Read-only in Phase 3; editing arrives with user management. */
+/** Administration → Users (plan §31): accounts, roles and account security. */
 export function UsersPage() {
   const { data: users, isPending, isError, error, refetch, isFetching } = useUsers()
+  const { data: me } = useCurrentUser()
+  const canManage = can(me, 'users:manage')
+  const [dialog, setDialog] = useState<UserDialogState>(null)
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -29,6 +44,7 @@ export function UsersPage() {
         eyebrow="Administration"
         title="Users"
         description="Everyone with access to FALCON, their role and account security status."
+        actions={canManage && <Button onClick={() => setDialog({ kind: 'create' })}><UserPlus /> New user</Button>}
       />
       <Card>
         <CardHeader>
@@ -59,29 +75,39 @@ export function UsersPage() {
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="hidden md:table-cell">MFA</TableHead>
-                  <TableHead className="hidden pr-6 lg:table-cell">Last sign-in</TableHead>
+                  <TableHead className="hidden lg:table-cell">Last sign-in</TableHead>
+                  {canManage && <TableHead className="w-12 pr-6"><span className="sr-only">Actions</span></TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isPending
                   ? Array.from({ length: 5 }, (_, i) => (
                       <TableRow key={i}>
-                        <TableCell colSpan={5} className="px-6">
+                        <TableCell colSpan={6} className="px-6">
                           <Skeleton className="h-8 w-full" />
                         </TableCell>
                       </TableRow>
                     ))
-                  : users.map((user) => <UserRow key={user.id} user={user} />)}
+                  : users.map((user) => (
+                      <UserRow key={user.id} user={user} isMe={user.id === me?.id} canManage={canManage} onAction={setDialog} />
+                    ))}
               </TableBody>
             </Table>
           )}
         </CardContent>
       </Card>
+      {dialog && <UserDialogs state={dialog} onClose={() => setDialog(null)} />}
     </div>
   )
 }
 
-function UserRow({ user }: { user: UserSummary }) {
+function UserRow({ user, isMe, canManage, onAction }: { user: UserSummary; isMe: boolean; canManage: boolean; onAction: (s: UserDialogState) => void }) {
+  const admin = useUserAdmin()
+  const unlock = () =>
+    admin.mutate({ kind: 'unlock', id: user.id }, {
+      onSuccess: () => toast.success(`${user.displayName} unlocked`),
+      onError: (err) => toast.error('Could not unlock', { description: err instanceof ApiError ? err.message : undefined }),
+    })
   return (
     <TableRow>
       <TableCell className="pl-6">
@@ -107,9 +133,27 @@ function UserRow({ user }: { user: UserSummary }) {
           <Pill tone="warning" icon={ShieldOff}>Not enrolled</Pill>
         )}
       </TableCell>
-      <TableCell className="hidden pr-6 text-muted-foreground tabular-nums lg:table-cell">
+      <TableCell className="hidden text-muted-foreground tabular-nums lg:table-cell">
         {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : 'Never'}
       </TableCell>
+      {canManage && (
+        <TableCell className="pr-6">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon-sm" aria-label={`Actions for ${user.displayName}`}><MoreHorizontal /></Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onSelect={() => onAction({ kind: 'edit', user })}><Pencil /> Edit name and role</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onAction({ kind: 'password', user })}><KeyRound /> Set temporary password</DropdownMenuItem>
+              {user.locked && <DropdownMenuItem onSelect={unlock}><LockOpen /> Unlock account</DropdownMenuItem>}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem disabled={isMe} onSelect={() => onAction({ kind: 'active', user })} className={user.isActive ? 'text-destructive' : undefined}>
+                {user.isActive ? <><UserX /> Deactivate…</> : <><UserCheck /> Reactivate…</>}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TableCell>
+      )}
     </TableRow>
   )
 }

@@ -92,6 +92,9 @@ export interface AuditEntry {
   occurredAt: string
   actorEmail: string | null
   action: string
+  objectType?: string | null
+  objectId?: string | null
+  ipAddress?: string | null
   previousState: Record<string, unknown> | null
   newState: Record<string, unknown> | null
   note: string | null

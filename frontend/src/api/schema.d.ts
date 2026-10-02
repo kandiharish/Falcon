@@ -82,7 +82,59 @@ export interface paths {
         /** List Users */
         get: operations["list_users_api_admin_users_get"];
         put?: never;
+        /** Create User */
+        post: operations["create_user_api_admin_users_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update User */
+        patch: operations["update_user_api_admin_users__user_id__patch"];
+        trace?: never;
+    };
+    "/api/admin/users/{user_id}/unlock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Unlock */
+        post: operations["unlock_api_admin_users__user_id__unlock_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users/{user_id}/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reset Password */
+        post: operations["reset_password_api_admin_users__user_id__password_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -98,6 +150,26 @@ export interface paths {
         };
         /** List Audit Entries */
         get: operations["list_audit_entries_api_audit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/audit/export.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Audit
+         * @description The filtered audit trail as CSV (max 10,000 rows). Exporting is itself audited.
+         */
+        get: operations["export_audit_api_audit_export_csv_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -901,6 +973,13 @@ export interface components {
             note: string | null;
             /** Ip Address */
             ip_address: string | null;
+        };
+        /** AuditPage */
+        AuditPage: {
+            /** Items */
+            items: components["schemas"]["AuditEntry"][];
+            /** Total */
+            total: number;
         };
         /** Body_upload_evidence_api_investigations__case_reference__evidence_post */
         Body_upload_evidence_api_investigations__case_reference__evidence_post: {
@@ -1879,6 +1958,11 @@ export interface components {
             /** Passage */
             passage: string;
         };
+        /** PasswordReset */
+        PasswordReset: {
+            /** Temporary Password */
+            temporary_password: string;
+        };
         /** Person */
         Person: {
             /**
@@ -2229,6 +2313,32 @@ export interface components {
             /** Content */
             content: string;
         };
+        /** UserCreate */
+        UserCreate: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Display Name */
+            display_name: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "investigation_officer" | "forensic_analyst" | "evidence_analyst" | "incident_investigator" | "supervisor" | "system_admin";
+            /** Temporary Password */
+            temporary_password: string;
+        };
+        /** UserPatch */
+        UserPatch: {
+            /** Display Name */
+            display_name?: string | null;
+            /** Role */
+            role?: ("investigation_officer" | "forensic_analyst" | "evidence_analyst" | "incident_investigator" | "supervisor" | "system_admin") | null;
+            /** Is Active */
+            is_active?: boolean | null;
+        };
         /** UserSummary */
         UserSummary: {
             /**
@@ -2416,10 +2526,150 @@ export interface operations {
             };
         };
     };
+    create_user_api_admin_users_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_user_api_admin_users__user_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unlock_api_admin_users__user_id__unlock_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reset_password_api_admin_users__user_id__password_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordReset"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_audit_entries_api_audit_get: {
         parameters: {
             query?: {
+                action?: string | null;
+                actor?: string | null;
+                object?: string | null;
+                date_from?: string | null;
+                date_to?: string | null;
                 limit?: number;
+                offset?: number;
             };
             header?: never;
             path?: never;
@@ -2433,7 +2683,42 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuditEntry"][];
+                    "application/json": components["schemas"]["AuditPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_audit_api_audit_export_csv_get: {
+        parameters: {
+            query?: {
+                action?: string | null;
+                actor?: string | null;
+                object?: string | null;
+                date_from?: string | null;
+                date_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

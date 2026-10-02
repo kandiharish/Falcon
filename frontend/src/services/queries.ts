@@ -10,7 +10,7 @@ import {
   useMutation,
   useQuery,
 } from '@tanstack/react-query'
-import { AdminService } from './adminService'
+import { AdminService, type AuditQuery } from './adminService'
 import { CorrelationService, type CorrelationQuery } from './correlationService'
 import { GraphService, type GraphQuery } from './graphService'
 import { AIService } from './aiService'
@@ -403,4 +403,30 @@ export const useGlobalSearch = (text: string) =>
     enabled: text.trim().length >= 2,
     placeholderData: keepPreviousData,
     staleTime: 15_000,
+  })
+
+// ---------- Administration & audit ------------------------------------------------------
+
+export const useAuditLog = (query: AuditQuery, enabled = true) =>
+  useQuery({ queryKey: ['audit', query], queryFn: () => AdminService.audit(query), enabled, placeholderData: keepPreviousData })
+
+export const useUserAdmin = () =>
+  useMutation({
+    mutationFn: async (action:
+      | { kind: 'create'; input: Parameters<typeof AdminService.createUser>[0] }
+      | { kind: 'update'; id: string; input: Parameters<typeof AdminService.updateUser>[1] }
+      | { kind: 'unlock'; id: string }
+      | { kind: 'password'; id: string; password: string }) => {
+      switch (action.kind) {
+        case 'create':
+          return AdminService.createUser(action.input)
+        case 'update':
+          return AdminService.updateUser(action.id, action.input)
+        case 'unlock':
+          return AdminService.unlock(action.id)
+        case 'password':
+          return AdminService.resetPassword(action.id, action.password)
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.users }),
   })
