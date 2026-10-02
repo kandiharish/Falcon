@@ -44,8 +44,11 @@ Legend: ✅ in use now · 🔜 planned (phase)
 | React Hook Form + Zod | 7 / 4 | ✅ P3 | Forms + validation | One schema = type + runtime validation. |
 | openapi-typescript | 7.13 (via npx) | ✅ P4 | Generate TS types from the API (`npm run api:types`) | Frontend and backend types can never drift apart. Run through npx because it officially supports TypeScript 5 only. |
 | Recharts | — | 🔜 P11 | Dashboard charts | Simple, good for aggregate statistics. |
-| vis-timeline | — | 🔜 P7 | Zoomable timeline | Built-in zoom, grouping, ranges. |
-| Leaflet + OpenStreetMap | — | 🔜 P7 | Maps | Free, no API key. Google Maps requires billing. |
+| FALCON TimelineChart (own component) | — | ✅ P7 | Zoomable, pannable timeline with lanes | *Replaced vis-timeline* (needs 9 peer packages incl. moment; hard to theme and make keyboard-accessible). ~250 lines, every event a real button. |
+| Leaflet 1.9 + react-leaflet 5 + OpenStreetMap tiles | — | ✅ P7 | Map of located events, entity movement, replay slider | Free, no API key (Google Maps requires billing). Map code is lazy-loaded. |
+| leaflet.markercluster | 1.5 | ✅ P7 | Groups nearby points into numbered bubbles | Keeps maps readable with many events. |
+| Intl API (built into browsers) | — | ✅ P7 | Time zones: show/read times in the case's zone | No date library needed (moment / date-fns not required). |
+| tzdata (Python) | — | ✅ P7 | IANA time-zone database for the backend | Windows has no system zone database. |
 | Cytoscape.js | — | 🔜 P9 | Relationship graph | Built for network analysis (layouts, shortest path, centrality). React Flow is for flowcharts; D3 means building everything. |
 
 ## 2. Backend
@@ -74,7 +77,7 @@ Legend: ✅ in use now · 🔜 planned (phase)
 | Tool | Version | Status | Job | Why |
 |---|---|---|---|---|
 | PostgreSQL | 17.5 | ✅ P0 | Main database | Relational data (case → evidence → entity → event). MongoDB suits documents, not relationships. |
-| PostGIS | 3.5 | ✅ P0 | Geo queries ("within 200 m") | Location correlation in one SQL line. |
+| PostGIS | 3.5 | ✅ P0, used P7 | Geo queries: `ST_DWithin` on geography points ("events within 100 m") | Real distances on the Earth's surface, in one SQL line. |
 | pgvector | 0.8 | ✅ P0 | Vector similarity search | Duplicate/similar evidence without a separate vector DB. |
 | pg_trgm | 1.6 | ✅ P0 | Fuzzy text search | "CCTV-01" finds "CCTV-001". Replaces Elasticsearch for our scale. |
 | Graph in PostgreSQL | — | 🔜 P9 | Relationships table + recursive SQL | One database = no sync problems. Neo4j only if ever justified. |

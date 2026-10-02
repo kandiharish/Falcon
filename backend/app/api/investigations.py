@@ -57,6 +57,7 @@ class InvestigationOut(BaseModel):
     priority: Priority
     stage: Stage
     location: str
+    time_zone: str
     tags: list[str]
     lead_investigator: PersonRef
     team_size: int
@@ -79,6 +80,7 @@ class InvestigationCreate(BaseModel):
     priority: Priority = "medium"
     location: str = Field(default="", max_length=200)
     description: str = Field(default="", max_length=5000)
+    time_zone: str = Field(default="UTC", max_length=64)
     tags: list[str] = Field(default_factory=list, max_length=10)
 
 
@@ -90,6 +92,7 @@ class InvestigationUpdate(BaseModel):
     stage: Stage | None = None
     location: str | None = Field(default=None, max_length=200)
     description: str | None = Field(default=None, max_length=5000)
+    time_zone: str | None = Field(default=None, max_length=64)
     tags: list[str] | None = Field(default=None, max_length=10)
 
 
@@ -126,6 +129,7 @@ def _out(
         priority=investigation.priority,  # type: ignore[arg-type]
         stage=investigation.stage,  # type: ignore[arg-type]
         location=investigation.location,
+        time_zone=investigation.time_zone,
         tags=investigation.tags,
         lead_investigator=PersonRef(
             id=investigation.lead_investigator.id,

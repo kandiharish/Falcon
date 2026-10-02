@@ -292,17 +292,31 @@ def list_events(
     case_reference: str,
     user: Reader,
     db: DB,
-    event_type: EventType | None = None,
+    event_type: Annotated[list[EventType] | None, Query(description="Repeat for several")] = None,
     entity: Annotated[str | None, Query(max_length=12)] = None,
     evidence: Annotated[str | None, Query(max_length=20)] = None,
+    evidence_type: Annotated[str | None, Query(max_length=30)] = None,
     occurred_from: datetime | None = None,
     occurred_to: datetime | None = None,
     review_status: ReviewStatus | None = None,
-    limit: Annotated[int, Query(ge=1, le=500)] = 200,
+    has_location: bool | None = None,
+    near_lat: Annotated[float | None, Query(ge=-90, le=90)] = None,
+    near_lon: Annotated[float | None, Query(ge=-180, le=180)] = None,
+    radius_m: Annotated[float, Query(gt=0, le=100_000)] = 250,
+    limit: Annotated[int, Query(ge=1, le=2000)] = 500,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> EventPage:
+    near = (near_lat, near_lon, radius_m) if near_lat is not None and near_lon is not None else None
     filters = service.EventFilters(
-        event_type, entity, evidence, occurred_from, occurred_to, review_status
+        entity_reference=entity,
+        evidence_reference=evidence,
+        occurred_from=occurred_from,
+        occurred_to=occurred_to,
+        review_status=review_status,
+        event_types=tuple(event_type or ()),
+        evidence_type=evidence_type,
+        has_location=has_location,
+        near=near,
     )
     events, total = service.list_events(db, user, case_reference, filters, limit, offset)
     return EventPage(items=[event_out(e) for e in events], total=total)

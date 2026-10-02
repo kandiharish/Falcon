@@ -14,6 +14,12 @@ export function useCaseAccess(caseRef: string | null) {
   }
 }
 
+/** The investigation's time zone (falls back to UTC while loading). */
+export function useCaseTimeZone(caseRef: string | null): string {
+  const { data: investigation } = useInvestigation(caseRef)
+  return investigation?.timeZone ?? 'UTC'
+}
+
 export function useCurrentCase() {
   return useInvestigationContext((s) => s.currentInvestigationId)
 }

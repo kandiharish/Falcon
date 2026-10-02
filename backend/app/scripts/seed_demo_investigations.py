@@ -125,6 +125,7 @@ def main() -> int:
                 priority=case["priority"],
                 stage=case["stage"],
                 location=case["location"],
+                time_zone="Asia/Kolkata",  # all fictional demo cases are set in India
                 tags=case["tags"],
                 description=case["description"],
                 lead_investigator_id=lead.id,

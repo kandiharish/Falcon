@@ -180,3 +180,37 @@
     }
   }
 }
+
+/* ---------- Map (Leaflet) ---------- */
+.falcon-map .leaflet-container {
+  background: var(--muted);
+  font-family: var(--font-sans);
+}
+/* Dark mode: darken the OpenStreetMap tiles instead of loading a second map style. */
+.dark .falcon-map .leaflet-tile {
+  filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9);
+}
+.falcon-pin {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--card);
+  border-radius: 9999px;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.35);
+}
+.falcon-path {
+  stroke: var(--primary);
+}
+/* Cluster bubbles in FALCON colours (the plugin's defaults are green/yellow/orange). */
+.falcon-map .marker-cluster-small,
+.falcon-map .marker-cluster-medium,
+.falcon-map .marker-cluster-large {
+  background-color: color-mix(in oklch, var(--primary) 30%, transparent);
+}
+.falcon-map .marker-cluster-small div,
+.falcon-map .marker-cluster-medium div,
+.falcon-map .marker-cluster-large div {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 600;
+}

@@ -42,11 +42,15 @@ export interface NewInvestigation {
   priority: Priority
   location: string
   description: string
+  timeZone: string
   tags: string[]
 }
 
 export type InvestigationChanges = Partial<
-  Pick<Investigation, 'title' | 'caseType' | 'priority' | 'status' | 'stage' | 'location' | 'description' | 'tags'>
+  Pick<
+    Investigation,
+    'title' | 'caseType' | 'priority' | 'status' | 'stage' | 'location' | 'description' | 'tags' | 'timeZone'
+  >
 >
 
 const toInvestigation = (dto: InvestigationDto): Investigation => ({
@@ -58,6 +62,7 @@ const toInvestigation = (dto: InvestigationDto): Investigation => ({
   priority: dto.priority,
   stage: dto.stage,
   location: dto.location,
+  timeZone: dto.time_zone,
   tags: dto.tags,
   leadInvestigator: { id: dto.lead_investigator.id, displayName: dto.lead_investigator.display_name },
   teamSize: dto.team_size,
@@ -112,6 +117,7 @@ export const InvestigationService = {
       priority: input.priority,
       location: input.location,
       description: input.description,
+      time_zone: input.timeZone,
       tags: input.tags,
     }
     return toInvestigation(await apiPost<InvestigationDto>('/investigations', body))
@@ -127,6 +133,7 @@ export const InvestigationService = {
       ...(changes.location !== undefined && { location: changes.location }),
       ...(changes.description !== undefined && { description: changes.description }),
       ...(changes.tags !== undefined && { tags: changes.tags }),
+      ...(changes.timeZone !== undefined && { time_zone: changes.timeZone }),
     }
     return toInvestigation(
       await apiPatch<InvestigationDto>(`/investigations/${encodeURIComponent(reference)}`, body),

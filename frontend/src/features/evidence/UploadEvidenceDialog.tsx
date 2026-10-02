@@ -27,7 +27,9 @@ import { ApiError } from '@/services/apiClient'
 import { useUploadEvidence } from '@/services/queries'
 import { evidenceTypeTerms, guessEvidenceType } from '@/design-system/vocabulary'
 import { formatBytes } from '@/lib/format'
+import { localInputToUtc } from '@/lib/time'
 import { cn } from '@/lib/utils'
+import { useCaseTimeZone } from '@/features/extraction/useCaseAccess'
 
 interface Props {
   caseReference: string
@@ -49,6 +51,7 @@ const EMPTY = {
 /** Evidence upload (plan §11). The server fingerprints the file; the original is never changed. */
 export function UploadEvidenceDialog({ caseReference, open, onOpenChange }: Props) {
   const upload = useUploadEvidence(caseReference)
+  const timeZone = useCaseTimeZone(caseReference)
   const navigate = useNavigate()
   const inputRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
@@ -96,8 +99,8 @@ export function UploadEvidenceDialog({ caseReference, open, onOpenChange }: Prop
           evidenceType: fields.evidenceType,
           source: fields.source,
           description: fields.description,
-          // <input type="datetime-local"> has no zone: interpret it in the investigator's zone
-          collectedAt: fields.collectedAt ? new Date(fields.collectedAt).toISOString() : null,
+          // <input type="datetime-local"> has no zone: read it in the INVESTIGATION's zone
+          collectedAt: fields.collectedAt ? localInputToUtc(fields.collectedAt, timeZone) : null,
           locationText: fields.locationText,
           latitude: hasLat ? Number(fields.latitude) : null,
           longitude: hasLon ? Number(fields.longitude) : null,
@@ -207,7 +210,7 @@ export function UploadEvidenceDialog({ caseReference, open, onOpenChange }: Prop
           <TextField id="ev-source" label="Source" placeholder="e.g. Warehouse gate camera 3" value={fields.source} onChange={set('source')} />
           <div className="space-y-1.5">
             <Label htmlFor="ev-collected">
-              Collected at <span className="font-normal text-muted-foreground">(optional)</span>
+              Collected at <span className="font-normal text-muted-foreground">({timeZone}, optional)</span>
             </Label>
             <Input id="ev-collected" type="datetime-local" value={fields.collectedAt} onChange={(e) => set('collectedAt')(e.target.value)} />
           </div>

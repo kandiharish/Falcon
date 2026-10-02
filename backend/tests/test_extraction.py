@@ -292,3 +292,43 @@ def test_reprocessing_keeps_entity_references_stable(team):
     client.post(f"/api/investigations/{case}/evidence/CALL-001/reprocess")
     process_latest_job(case, "CALL-001")
     assert sorted((e["reference"], e["label"]) for e in entities(client, case)) == before
+
+
+def test_timeline_and_map_filters(team):
+    client, case = team["officer"], team["case"]
+    upload(client, case, GPS_CSV, "track.csv", "gps")
+    upload(client, case, CALLS_CSV, "calls.csv", "call_records")
+    process_latest_job(case, "GPS-001")
+    process_latest_job(case, "CALL-001")
+
+    located = events(client, case, has_location="true")
+    assert {e["event_type"] for e in located} == {"location_recorded"}
+    both = client.get(
+        f"/api/investigations/{case}/events",
+        params=[("event_type", "call_made"), ("event_type", "location_recorded")],
+    ).json()["items"]
+    assert len(both) == 4
+    assert {e["evidence_type"] for e in events(client, case, evidence_type="gps")} == {"gps"}
+    # PostGIS: only the fix at the warehouse is within 100 m of it (the other is 1.4 km away)
+    near = events(client, case, near_lat=17.43862, near_lon=78.39215, radius_m=100)
+    assert [(e["latitude"], e["longitude"]) for e in near] == [(17.43862, 78.39215)]
+
+
+def test_naive_times_are_read_in_the_case_time_zone(team):
+    client, case = team["officer"], team["case"]
+    assert (
+        client.patch(f"/api/investigations/{case}", json={"time_zone": "Mars/Base"}).status_code
+        == 422
+    )
+    assert (
+        client.patch(f"/api/investigations/{case}", json={"time_zone": "Asia/Kolkata"}).json()[
+            "time_zone"
+        ]
+        == "Asia/Kolkata"
+    )
+    upload(client, case, CALLS_CSV, "calls.csv", "call_records")  # times have no zone
+    process_latest_job(case, "CALL-001")
+    first = events(client, case)[0]
+    assert first["occurred_at"].startswith("2026-09-28T15:03:00")  # 20:33 IST = 15:03 UTC
+    message = client.get(f"/api/investigations/{case}/evidence/CALL-001").json()["latest_job"]
+    assert "Asia/Kolkata" in message["error_message"]

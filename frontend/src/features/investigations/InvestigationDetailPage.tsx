@@ -22,6 +22,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { Investigation, InvestigationStatus } from '@/domain/types'
@@ -36,6 +43,7 @@ import { EmptyState, ErrorState } from '@/design-system/states'
 import { WorkflowStepper } from '@/design-system/WorkflowStepper'
 import { allowedTransitions, investigationStatusTerms, transitionLabels } from '@/design-system/vocabulary'
 import { formatDateTime } from '@/lib/format'
+import { allTimeZones, zoneLabel } from '@/lib/time'
 import { ActivityTab } from './ActivityTab'
 import { TeamTab } from './TeamTab'
 
@@ -172,6 +180,41 @@ function StatusActions({ investigation }: { investigation: Investigation }) {
   )
 }
 
+/** The case's time zone; editors can change it (it changes how times are shown and read). */
+function TimeZoneField({ investigation }: { investigation: Investigation }) {
+  const { data: user } = useCurrentUser()
+  const update = useUpdateInvestigation(investigation.reference)
+  const canEdit =
+    can(user, 'investigation:write') &&
+    (investigation.myRoleInCase !== null || user?.role === 'supervisor') &&
+    investigation.status !== 'archived'
+  if (!canEdit) return <>{zoneLabel(investigation.timeZone)}</>
+  return (
+    <Select
+      value={investigation.timeZone}
+      disabled={update.isPending}
+      onValueChange={(timeZone) =>
+        update.mutate(
+          { timeZone },
+          {
+            onSuccess: () => toast.success(`Time zone set to ${zoneLabel(timeZone)}`),
+            onError: (err) => toast.error('Time zone not changed', { description: err instanceof ApiError ? err.message : undefined }),
+          },
+        )
+      }
+    >
+      <SelectTrigger size="sm" className="w-full max-w-64" aria-label="Investigation time zone">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent className="max-h-72">
+        {allTimeZones().map((zone) => (
+          <SelectItem key={zone} value={zone}>{zoneLabel(zone)}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  )
+}
+
 function OverviewTab({ investigation }: { investigation: Investigation }) {
   const counts = [
     { label: 'Evidence items', value: investigation.counts.evidence, icon: FileStack, phase: 5 },
@@ -209,6 +252,9 @@ function OverviewTab({ investigation }: { investigation: Investigation }) {
               ) : (
                 '—'
               )}
+            </Detail>
+            <Detail label="Time zone">
+              <TimeZoneField investigation={investigation} />
             </Detail>
             <Detail label="Created">{formatDateTime(investigation.createdAt)}</Detail>
             <Detail label="Last updated">{formatDateTime(investigation.updatedAt)}</Detail>

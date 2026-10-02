@@ -26,6 +26,7 @@ import { useInvestigationContext } from '@/app/investigation-context'
 import { ApiError } from '@/services/apiClient'
 import { useCreateInvestigation } from '@/services/queries'
 import { CASE_TYPES, priorityTerms } from '@/design-system/vocabulary'
+import { allTimeZones, browserTimeZone, zoneLabel } from '@/lib/time'
 
 const schema = z.object({
   title: z.string().trim().min(3, 'Use at least 3 characters.').max(200),
@@ -34,6 +35,7 @@ const schema = z.object({
   location: z.string().trim().max(200),
   description: z.string().trim().max(5000),
   tags: z.string().max(400),
+  timeZone: z.string().min(1, 'Choose the time zone of the place under investigation.'),
 })
 type FormValues = z.infer<typeof schema>
 
@@ -49,7 +51,15 @@ export function NewInvestigationDialog({ open, onOpenChange }: Props) {
   const setCurrentInvestigation = useInvestigationContext((s) => s.setCurrentInvestigation)
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { title: '', caseType: '', priority: 'medium', location: '', description: '', tags: '' },
+    defaultValues: {
+      title: '',
+      caseType: '',
+      priority: 'medium',
+      location: '',
+      description: '',
+      tags: '',
+      timeZone: browserTimeZone(),
+    },
   })
   const { errors } = form.formState
 
@@ -138,6 +148,30 @@ export function NewInvestigationDialog({ open, onOpenChange }: Props) {
               />
             </Field>
           </div>
+
+          <Field
+            label="Time zone"
+            htmlFor="inv-zone"
+            error={errors.timeZone?.message}
+            hint="Where the events happened. Times in this case are shown — and typed times read — in this zone."
+          >
+            <Controller
+              control={form.control}
+              name="timeZone"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger id="inv-zone" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {allTimeZones().map((zone) => (
+                      <SelectItem key={zone} value={zone}>{zoneLabel(zone)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </Field>
 
           <Field label="Location" htmlFor="inv-location" optional>
             <Input id="inv-location" placeholder="e.g. Riverside Industrial Zone" {...form.register('location')} />

@@ -19,7 +19,8 @@ import { PageHeader } from '@/design-system/PageHeader'
 import { EmptyState, ErrorState } from '@/design-system/states'
 import { eventTypeTerms, reviewStatusTerms } from '@/design-system/vocabulary'
 import { EventRow } from './components'
-import { useCaseAccess, useCurrentCase } from './useCaseAccess'
+import { dayInZone, zoneLabel } from '@/lib/time'
+import { useCaseAccess, useCaseTimeZone, useCurrentCase } from './useCaseAccess'
 
 const ALL = 'all'
 
@@ -27,6 +28,7 @@ const ALL = 'all'
 export function EventsPage() {
   const caseRef = useCurrentCase()
   const { canReview } = useCaseAccess(caseRef)
+  const timeZone = useCaseTimeZone(caseRef)
   const [type, setType] = useState<EventType | typeof ALL>(ALL)
   const [entity, setEntity] = useState<string>(ALL)
   const [review, setReview] = useState<ReviewStatus | typeof ALL>(ALL)
@@ -47,14 +49,14 @@ export function EventsPage() {
     )
   }
   const filtered = Boolean(query.event_type || query.entity || query.review_status)
-  const days = groupByDay(data?.items ?? [])
+  const days = groupByDay(data?.items ?? [], timeZone)
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
       <PageHeader
         eyebrow={<IdTag>{caseRef}</IdTag>}
         title="Events"
-        description="Things that happened, in time order. Each one links to the evidence that supports it. Times are shown in your local time zone."
+        description={`Things that happened, in time order. Each one links to the evidence that supports it. Times are shown in the investigation's time zone: ${zoneLabel(timeZone)}.`}
       />
 
       <div className="flex flex-wrap items-center gap-2">
@@ -118,12 +120,11 @@ export function EventsPage() {
   )
 }
 
-function groupByDay(events: InvestigationEvent[]): [string, InvestigationEvent[]][] {
+/** Days are the investigation's days: 23:30 in India is not "tomorrow" because a viewer is elsewhere. */
+function groupByDay(events: InvestigationEvent[], timeZone: string): [string, InvestigationEvent[]][] {
   const groups = new Map<string, InvestigationEvent[]>()
   for (const event of events) {
-    const day = event.occurredAt
-      ? new Date(event.occurredAt).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-      : 'Time unknown'
+    const day = event.occurredAt ? dayInZone(event.occurredAt, timeZone) : 'Time unknown'
     groups.set(day, [...(groups.get(day) ?? []), event])
   }
   return [...groups.entries()]

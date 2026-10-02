@@ -924,6 +924,11 @@ export interface components {
              * @default
              */
             description: string;
+            /**
+             * Time Zone
+             * @default UTC
+             */
+            time_zone: string;
             /** Tags */
             tags?: string[];
         };
@@ -954,6 +959,8 @@ export interface components {
             stage: "intake" | "processing" | "extraction" | "correlation" | "review" | "reporting" | "closed";
             /** Location */
             location: string;
+            /** Time Zone */
+            time_zone: string;
             /** Tags */
             tags: string[];
             lead_investigator: components["schemas"]["PersonRef"];
@@ -1000,6 +1007,8 @@ export interface components {
             location?: string | null;
             /** Description */
             description?: string | null;
+            /** Time Zone */
+            time_zone?: string | null;
             /** Tags */
             tags?: string[] | null;
         };
@@ -2061,12 +2070,18 @@ export interface operations {
     list_events_api_investigations__case_reference__events_get: {
         parameters: {
             query?: {
-                event_type?: ("call_made" | "message_sent" | "transaction_completed" | "location_recorded" | "vehicle_detected" | "person_detected" | "device_detected" | "person_entered_location" | "photo_taken" | "video_recorded" | "document_created" | "communication" | "digital_artifact_created" | "other") | null;
+                /** @description Repeat for several */
+                event_type?: ("call_made" | "message_sent" | "transaction_completed" | "location_recorded" | "vehicle_detected" | "person_detected" | "device_detected" | "person_entered_location" | "photo_taken" | "video_recorded" | "document_created" | "communication" | "digital_artifact_created" | "other")[] | null;
                 entity?: string | null;
                 evidence?: string | null;
+                evidence_type?: string | null;
                 occurred_from?: string | null;
                 occurred_to?: string | null;
                 review_status?: ("pending" | "confirmed" | "rejected") | null;
+                has_location?: boolean | null;
+                near_lat?: number | null;
+                near_lon?: number | null;
+                radius_m?: number;
                 limit?: number;
                 offset?: number;
             };

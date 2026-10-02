@@ -68,6 +68,7 @@ export interface Investigation {
   priority: Priority
   stage: WorkflowStage
   location: string
+  timeZone: string // IANA, e.g. "Asia/Kolkata": times in this case are shown in this zone
   tags: string[]
   leadInvestigator: { id: string; displayName: string }
   teamSize: number

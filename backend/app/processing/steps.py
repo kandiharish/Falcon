@@ -6,8 +6,9 @@ fill fields the uploader left empty — they never overwrite what a person enter
 
 import csv
 import io
-from datetime import UTC, datetime
+from datetime import UTC, datetime, tzinfo
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from PIL import ExifTags, Image, UnidentifiedImageError
 
@@ -66,14 +67,16 @@ def extract_image_metadata(ctx: StepContext) -> str:
         info["exif"] = exif_values
 
     provenance: dict[str, str] = {}
-    taken_info = _exif_datetime(exif)
+    case_zone_name = evidence.investigation.time_zone or "UTC"
+    taken_info = _exif_datetime(exif, ZoneInfo(case_zone_name))
     taken = taken_info[0] if taken_info else None
     if taken_info and evidence.collected_at is None:
         evidence.collected_at, zone_known = taken_info
         provenance["collected_at"] = (
             "extracted (EXIF DateTimeOriginal with time zone)"
             if zone_known
-            else "extracted (EXIF DateTimeOriginal; camera time zone not recorded, shown as UTC)"
+            else "extracted (EXIF DateTimeOriginal; camera time zone not recorded, "
+            f"read in the case's time zone {case_zone_name})"
         )
         if not zone_known:
             ctx.warnings.append(
@@ -195,10 +198,10 @@ def _readable_exif(exif: Image.Exif) -> dict[str, str]:
     return values
 
 
-def _exif_datetime(exif: Image.Exif) -> tuple[datetime, bool] | None:
+def _exif_datetime(exif: Image.Exif, assumed_zone: tzinfo = UTC) -> tuple[datetime, bool] | None:
     """(time, zone_known). EXIF stores the camera's local clock time; newer cameras add the
     UTC offset in OffsetTimeOriginal (e.g. "+05:30"). Without it the zone is unknown and we
-    store the clock time as UTC, flagged so investigators know."""
+    read the clock time in the investigation's zone, flagged so investigators know."""
     exif_ifd = exif.get_ifd(ExifTags.IFD.Exif)
     raw = exif_ifd.get(ExifTags.Base.DateTimeOriginal) or exif.get(ExifTags.Base.DateTime)
     if not isinstance(raw, str):
@@ -216,7 +219,7 @@ def _exif_datetime(exif: Image.Exif) -> tuple[datetime, bool] | None:
             return datetime.strptime(with_zone, "%Y-%m-%d %H:%M:%S%z"), True
         except ValueError:
             pass
-    return local.replace(tzinfo=UTC), False
+    return local.replace(tzinfo=assumed_zone), False
 
 
 def _exif_gps(exif: Image.Exif) -> tuple[float, float] | None:

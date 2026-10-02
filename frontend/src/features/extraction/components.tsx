@@ -12,8 +12,9 @@ import { useReview } from '@/services/queries'
 import { AssertionLabel, StatusBadge } from '@/design-system/badges'
 import { ConfidenceIndicator } from '@/design-system/ConfidenceIndicator'
 import { entityTypeTerms, eventTypeTerms, participantRoleLabels } from '@/design-system/vocabulary'
-import { formatDateTime } from '@/lib/format'
+import { formatInZone, timeInZone } from '@/lib/time'
 import { cn } from '@/lib/utils'
+import { useCaseTimeZone } from './useCaseAccess'
 
 export function EntityChip({ entity, caseRef, role }: { entity: EntityRef; caseRef: string; role?: string }) {
   const term = entityTypeTerms[entity.entityType]
@@ -107,23 +108,30 @@ export function EventRow({
   caseRef,
   canReview,
   showEvidence = true,
+  compact = false,
 }: {
   event: InvestigationEvent
   caseRef: string
   canReview: boolean
   showEvidence?: boolean
+  /** Narrow places (drawers): review buttons go under the text instead of beside it. */
+  compact?: boolean
 }) {
   const term = eventTypeTerms[event.eventType]
+  const timeZone = useCaseTimeZone(caseRef)
+  const review = canReview && (
+    <ReviewActions caseRef={caseRef} kind="event" reference={event.reference} status={event.reviewStatus} size="xs" />
+  )
   return (
     <li className={cn('flex gap-3 py-3', event.reviewStatus === 'rejected' && 'opacity-55')}>
-      <div className="w-24 shrink-0 text-right">
+      <div className={cn('shrink-0 text-right', compact ? 'w-16' : 'w-24')}>
         {event.occurredAt ? (
           <>
             <p className="font-mono text-sm tabular-nums">
-              {new Date(event.occurredAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              {timeInZone(event.occurredAt, timeZone)}
             </p>
             <p className="text-[0.7rem] text-muted-foreground">
-              {new Date(event.occurredAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+              {formatInZone(event.occurredAt, timeZone, { day: 'numeric', month: 'short' })}
             </p>
           </>
         ) : (
@@ -162,14 +170,11 @@ export function EventRow({
           </div>
         )}
         {event.endedAt && event.occurredAt && (
-          <p className="text-xs text-muted-foreground">Until {formatDateTime(event.endedAt)}</p>
+          <p className="text-xs text-muted-foreground">Until {formatInZone(event.endedAt, timeZone, { dateStyle: 'medium', timeStyle: 'medium' })}</p>
         )}
+        {compact && review && <div className="pt-1">{review}</div>}
       </div>
-      {canReview && (
-        <div className="shrink-0">
-          <ReviewActions caseRef={caseRef} kind="event" reference={event.reference} status={event.reviewStatus} size="xs" />
-        </div>
-      )}
+      {!compact && review && <div className="shrink-0">{review}</div>}
     </li>
   )
 }

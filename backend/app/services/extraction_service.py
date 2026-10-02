@@ -58,6 +58,10 @@ class EventFilters:
     occurred_from: datetime | None = None
     occurred_to: datetime | None = None
     review_status: str | None = None
+    event_types: tuple[str, ...] = ()
+    evidence_type: str | None = None
+    has_location: bool | None = None
+    near: tuple[float, float, float] | None = None  # (latitude, longitude, radius in metres)
 
 
 @dataclass
@@ -283,6 +287,15 @@ def list_events(
                 EventParticipant.entity.has(reference=filters.entity_reference.upper())
             )
         )
+    if filters.event_types:
+        query = query.where(Event.event_type.in_(filters.event_types))
+    if filters.evidence_type:
+        query = query.where(Event.evidence.has(evidence_type=filters.evidence_type))
+    if filters.has_location is not None:
+        located = Event.latitude.is_not(None) & Event.longitude.is_not(None)
+        query = query.where(located if filters.has_location else ~located)
+    if filters.near:
+        query = query.where(_within_metres(*filters.near))
     total = db.scalar(select(func.count()).select_from(query.subquery())) or 0
     events = db.scalars(
         query.order_by(Event.occurred_at.asc().nulls_last(), Event.reference)
@@ -290,6 +303,18 @@ def list_events(
         .offset(offset)
     ).all()
     return list(events), total
+
+
+def _point(latitude: Any, longitude: Any) -> Any:
+    """A PostGIS geography point (WGS 84, the system GPS uses). Note: longitude comes first."""
+    return func.geography(func.ST_SetSRID(func.ST_MakePoint(longitude, latitude), 4326))
+
+
+def _within_metres(latitude: float, longitude: float, radius_m: float) -> Any:
+    """PostGIS measures the real distance on the Earth's surface, in metres."""
+    return func.ST_DWithin(
+        _point(Event.latitude, Event.longitude), _point(latitude, longitude), radius_m
+    )
 
 
 def get_event(db: Session, user: User, case_reference: str, reference: str) -> Event:

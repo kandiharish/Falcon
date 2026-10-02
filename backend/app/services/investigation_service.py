@@ -11,6 +11,7 @@ Rules enforced here:
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -20,7 +21,7 @@ from app.repositories import investigation_repository as repo
 from app.repositories.investigation_repository import InvestigationFilters
 from app.security.permissions import Permission, Role, permissions_for
 from app.services import audit_service
-from app.services.errors import ConflictError, ForbiddenError, NotFoundError
+from app.services.errors import ConflictError, ForbiddenError, InvalidInputError, NotFoundError
 from app.services.request_context import RequestContext
 
 NOT_FOUND = "This investigation does not exist or you are not on its team."
@@ -43,8 +44,22 @@ EDITABLE_FIELDS = (
     "status",
     "stage",
     "location",
+    "time_zone",
     "tags",
 )
+
+
+def validate_time_zone(name: str) -> str:
+    """Only real IANA zone names ("Asia/Kolkata", "Europe/London", "UTC") are accepted."""
+    try:
+        ZoneInfo(name)
+    except (ZoneInfoNotFoundError, ValueError):
+        raise InvalidInputError(f"'{name}' is not a known time zone.") from None
+    return name
+
+
+def case_zone(investigation: Investigation) -> ZoneInfo:
+    return ZoneInfo(investigation.time_zone or "UTC")
 
 
 def _sees_all(user: User) -> bool:
@@ -58,6 +73,7 @@ class NewInvestigation:
     priority: str = "medium"
     location: str = ""
     description: str = ""
+    time_zone: str = "UTC"
     tags: list[str] = field(default_factory=list)
 
 
@@ -92,6 +108,7 @@ def create_investigation(
         priority=data.priority,
         location=data.location.strip(),
         description=data.description.strip(),
+        time_zone=validate_time_zone(data.time_zone),
         tags=clean_tags(data.tags),
         status="draft",
         stage="intake",
@@ -133,6 +150,8 @@ def update_investigation(
             )
     if "tags" in changes:
         changes["tags"] = clean_tags(changes["tags"])
+    if "time_zone" in changes:
+        validate_time_zone(changes["time_zone"])
 
     before = _snapshot(investigation)
     for key, value in changes.items():

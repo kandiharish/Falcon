@@ -11,6 +11,7 @@ import csv
 import io
 from collections.abc import Iterator
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from app.extraction.sink import ExtractionSink, Provenance
 from app.extraction.timeparse import ParsedTime, parse_timestamp
@@ -85,20 +86,22 @@ def extract(sink: ExtractionSink, warnings: list[str]) -> None:
         )
         return
 
+    zone_name = evidence.investigation.time_zone or "UTC"
+    zone = ZoneInfo(zone_name)
     unzoned = 0
     for line_number, row in enumerate(rows, start=2):
         if line_number - 1 > MAX_ROWS:
             warnings.append(f"Only the first {MAX_ROWS:,} rows were extracted.")
             break
         value = _getter(row, columns)
-        when = parse_timestamp(value("time"))
+        when = parse_timestamp(value("time"), zone)
         if when and not when.zone_known:
             unzoned += 1
         HANDLERS[kind](sink, value, when, line_number)
     if unzoned:
         warnings.append(
-            f"{unzoned} row(s) have times without a time zone; they were read as UTC and "
-            "marked with lower confidence."
+            f"{unzoned} row(s) have times without a time zone; they were read in the case's "
+            f"time zone ({zone_name}) and marked with lower confidence."
         )
 
 

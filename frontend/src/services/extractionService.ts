@@ -30,10 +30,12 @@ export interface EntityQuery {
 }
 
 export interface EventQuery {
-  event_type?: EventType
+  event_type?: EventType | EventType[] // several = any of them
   entity?: string
   evidence?: string
+  evidence_type?: string
   review_status?: ReviewStatus
+  has_location?: boolean
 }
 
 export interface NewAnnotation {
@@ -107,7 +109,9 @@ const base = (caseRef: string) => `/investigations/${encodeURIComponent(caseRef)
 function queryString(query: object): string {
   const params = new URLSearchParams()
   for (const [key, value] of Object.entries(query)) {
-    if (value !== undefined && value !== '') params.set(key, String(value))
+    if (value === undefined || value === '') continue
+    // Lists become repeated parameters: ?event_type=call_made&event_type=photo_taken
+    for (const item of Array.isArray(value) ? value : [value]) params.append(key, String(item))
   }
   const text = params.toString()
   return text ? `?${text}` : ''

@@ -24,6 +24,8 @@ import type { EventType } from '@/domain/types'
 import { ApiError } from '@/services/apiClient'
 import { useAddAnnotation, useEntities } from '@/services/queries'
 import { annotationEventTypes, eventTypeTerms } from '@/design-system/vocabulary'
+import { localInputToUtc } from '@/lib/time'
+import { useCaseTimeZone } from './useCaseAccess'
 
 interface Props {
   caseRef: string
@@ -39,6 +41,7 @@ interface Props {
  */
 export function AnnotationDialog({ caseRef, evidenceRef, open, onOpenChange }: Props) {
   const add = useAddAnnotation(caseRef)
+  const timeZone = useCaseTimeZone(caseRef)
   const { data: entities } = useEntities(open ? caseRef : null)
   const [eventType, setEventType] = useState<EventType>('person_detected')
   const [occurredAt, setOccurredAt] = useState('')
@@ -64,7 +67,7 @@ export function AnnotationDialog({ caseRef, evidenceRef, open, onOpenChange }: P
       {
         evidenceReference: evidenceRef,
         eventType,
-        occurredAt: occurredAt ? new Date(occurredAt).toISOString() : null,
+        occurredAt: occurredAt ? localInputToUtc(occurredAt, timeZone) : null,
         description,
         locationText,
         participants: participants.map((reference) => ({ entityReference: reference, role: 'involved' })),
@@ -106,7 +109,7 @@ export function AnnotationDialog({ caseRef, evidenceRef, open, onOpenChange }: P
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="an-time">When (as shown in the evidence)</Label>
+            <Label htmlFor="an-time">When, in {timeZone === 'UTC' ? 'UTC' : timeZone}</Label>
             <Input id="an-time" type="datetime-local" step={1} value={occurredAt} onChange={(e) => setOccurredAt(e.target.value)} />
           </div>
           <div className="space-y-1.5 sm:col-span-2">

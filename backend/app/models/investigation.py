@@ -63,6 +63,9 @@ class Investigation(Base):
     priority: Mapped[str] = mapped_column(String(10), default="medium", index=True)
     stage: Mapped[str] = mapped_column(String(20), default="intake")
     location: Mapped[str] = mapped_column(String(200), default="")
+    # IANA time zone of the place under investigation (e.g. "Asia/Kolkata"). Times are stored
+    # in UTC; this zone is used to show them, and to read times that were written without one.
+    time_zone: Mapped[str] = mapped_column(String(64), default="UTC", server_default="UTC")
     tags: Mapped[list[str]] = mapped_column(ARRAY(String(40)), default=list)
 
     lead_investigator_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)
