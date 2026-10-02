@@ -70,6 +70,7 @@ async function readDetail(response: Response): Promise<string | null> {
 export const apiGet = <T>(path: string) => request<T>('GET', path)
 export const apiPost = <T>(path: string, body?: unknown) => request<T>('POST', path, body)
 export const apiPatch = <T>(path: string, body: unknown) => request<T>('PATCH', path, body)
+export const apiDelete = (path: string) => request<void>('DELETE', path)
 
 /**
  * POST, then read a streamed reply of newline-delimited JSON (NDJSON) as it arrives:

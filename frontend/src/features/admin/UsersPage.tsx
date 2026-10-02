@@ -146,6 +146,7 @@ function UserRow({ user, isMe, canManage, onAction }: { user: UserSummary; isMe:
               <DropdownMenuItem onSelect={() => onAction({ kind: 'edit', user })}><Pencil /> Edit name and role</DropdownMenuItem>
               <DropdownMenuItem onSelect={() => onAction({ kind: 'password', user })}><KeyRound /> Set temporary password</DropdownMenuItem>
               {user.locked && <DropdownMenuItem onSelect={unlock}><LockOpen /> Unlock account</DropdownMenuItem>}
+              {user.mfaEnabled && <DropdownMenuItem onSelect={() => onAction({ kind: 'reset-mfa', user })}><ShieldOff /> Reset MFA (lost phone)…</DropdownMenuItem>}
               <DropdownMenuSeparator />
               <DropdownMenuItem disabled={isMe} onSelect={() => onAction({ kind: 'active', user })} className={user.isActive ? 'text-destructive' : undefined}>
                 {user.isActive ? <><UserX /> Deactivate…</> : <><UserCheck /> Reactivate…</>}

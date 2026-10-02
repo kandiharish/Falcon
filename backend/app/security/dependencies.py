@@ -32,6 +32,17 @@ def current_session(request: Request, db: Annotated[Session, Depends(get_db)]) -
     return session
 
 
+def pending_or_current_session(
+    request: Request, db: Annotated[Session, Depends(get_db)]
+) -> UserSession:
+    """Also accepts a session that is still waiting for its MFA code (verify, sign out)."""
+    token = request.cookies.get(get_settings().session_cookie_name)
+    session = auth_service.session_for_token(db, token, allow_mfa_pending=True) if token else None
+    if session is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, NOT_SIGNED_IN)
+    return session
+
+
 def current_user(session: Annotated[UserSession, Depends(current_session)]) -> User:
     return session.user
 

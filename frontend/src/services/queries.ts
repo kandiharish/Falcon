@@ -76,7 +76,23 @@ export const useCurrentUser = () =>
 export const useLogin = () =>
   useMutation({
     mutationFn: (input: LoginInput) => AuthService.login(input),
+    onSuccess: ({ user }) => {
+      if (user) queryClient.setQueryData(queryKeys.currentUser, user)
+    },
+  })
+
+export const useVerifyCode = () =>
+  useMutation({
+    mutationFn: (code: string) => AuthService.verifyCode(code),
     onSuccess: (user) => queryClient.setQueryData(queryKeys.currentUser, user),
+  })
+
+export const useSessions = () => useQuery({ queryKey: ['account', 'sessions'], queryFn: AuthService.sessions })
+
+export const useEndSession = () =>
+  useMutation({
+    mutationFn: (id: string) => AuthService.endSession(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['account', 'sessions'] }),
   })
 
 export const useLogout = () =>
@@ -416,6 +432,7 @@ export const useUserAdmin = () =>
       | { kind: 'create'; input: Parameters<typeof AdminService.createUser>[0] }
       | { kind: 'update'; id: string; input: Parameters<typeof AdminService.updateUser>[1] }
       | { kind: 'unlock'; id: string }
+      | { kind: 'reset-mfa'; id: string }
       | { kind: 'password'; id: string; password: string }) => {
       switch (action.kind) {
         case 'create':
@@ -424,6 +441,8 @@ export const useUserAdmin = () =>
           return AdminService.updateUser(action.id, action.input)
         case 'unlock':
           return AdminService.unlock(action.id)
+        case 'reset-mfa':
+          return AdminService.resetMfa(action.id)
         case 'password':
           return AdminService.resetPassword(action.id, action.password)
       }

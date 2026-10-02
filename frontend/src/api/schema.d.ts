@@ -38,6 +38,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/mfa/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify Code
+         * @description Second step of sign-in: the 6-digit code (or a recovery code).
+         */
+        post: operations["verify_code_api_auth_mfa_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/logout": {
         parameters: {
             query?: never;
@@ -67,6 +87,91 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/mfa/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mfa Setup */
+        post: operations["mfa_setup_api_auth_mfa_setup_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/mfa/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mfa Confirm */
+        post: operations["mfa_confirm_api_auth_mfa_confirm_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/mfa/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mfa Disable */
+        post: operations["mfa_disable_api_auth_mfa_disable_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Sessions */
+        get: operations["my_sessions_api_auth_sessions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/sessions/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** End Session */
+        delete: operations["end_session_api_auth_sessions__session_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -135,6 +240,23 @@ export interface paths {
         put?: never;
         /** Reset Password */
         post: operations["reset_password_api_admin_users__user_id__password_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/users/{user_id}/reset-mfa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reset Mfa */
+        post: operations["reset_mfa_api_admin_users__user_id__reset_mfa_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1048,6 +1170,11 @@ export interface components {
              */
             updated_at: string;
         };
+        /** CodeIn */
+        CodeIn: {
+            /** Code */
+            code: string;
+        };
         /** CorrelationBrief */
         CorrelationBrief: {
             /** Reference */
@@ -1233,6 +1360,13 @@ export interface components {
             extensions: {
                 [key: string]: string | null;
             };
+        };
+        /** DisableIn */
+        DisableIn: {
+            /** Password */
+            password: string;
+            /** Code */
+            code: string;
         };
         /** EdgeOut */
         EdgeOut: {
@@ -1813,6 +1947,15 @@ export interface components {
              */
             remember: boolean;
         };
+        /**
+         * LoginResponse
+         * @description With MFA on, nothing about the account is revealed until the code is verified.
+         */
+        LoginResponse: {
+            /** Mfa Required */
+            mfa_required: boolean;
+            user: components["schemas"]["CurrentUserResponse"] | null;
+        };
         /** MemberAdd */
         MemberAdd: {
             /**
@@ -1871,6 +2014,15 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** MfaSetupOut */
+        MfaSetupOut: {
+            /** Secret */
+            secret: string;
+            /** Uri */
+            uri: string;
+            /** Qr Svg */
+            qr_svg: string;
         };
         /** NodeOut */
         NodeOut: {
@@ -1982,6 +2134,11 @@ export interface components {
             id: string;
             /** Display Name */
             display_name: string;
+        };
+        /** RecoveryCodesOut */
+        RecoveryCodesOut: {
+            /** Recovery Codes */
+            recovery_codes: string[];
         };
         /** ReindexOut */
         ReindexOut: {
@@ -2186,6 +2343,35 @@ export interface components {
              * @description topic words to look for in documents
              */
             text?: string | null;
+        };
+        /** SessionOut */
+        SessionOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Last Seen At
+             * Format: date-time
+             */
+            last_seen_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Ip Address */
+            ip_address: string | null;
+            /** User Agent */
+            user_agent: string | null;
+            /** Current */
+            current: boolean;
         };
         /** SimilarOut */
         SimilarOut: {
@@ -2454,6 +2640,39 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    "application/json": components["schemas"]["LoginResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_code_api_auth_mfa_verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CodeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
                     "application/json": components["schemas"]["CurrentUserResponse"];
                 };
             };
@@ -2502,6 +2721,139 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CurrentUserResponse"];
+                };
+            };
+        };
+    };
+    mfa_setup_api_auth_mfa_setup_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MfaSetupOut"];
+                };
+            };
+        };
+    };
+    mfa_confirm_api_auth_mfa_confirm_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CodeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryCodesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mfa_disable_api_auth_mfa_disable_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DisableIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_sessions_api_auth_sessions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionOut"][];
+                };
+            };
+        };
+    };
+    end_session_api_auth_sessions__session_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -2639,6 +2991,37 @@ export interface operations {
                 "application/json": components["schemas"]["PasswordReset"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reset_mfa_api_admin_users__user_id__reset_mfa_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

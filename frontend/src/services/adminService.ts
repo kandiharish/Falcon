@@ -56,6 +56,9 @@ export const AdminService = {
   async unlock(id: string): Promise<UserSummary> {
     return toUser(await apiPost<UserSummaryDto>(`/admin/users/${id}/unlock`))
   },
+  async resetMfa(id: string): Promise<UserSummary> {
+    return toUser(await apiPost<UserSummaryDto>(`/admin/users/${id}/reset-mfa`))
+  },
   async resetPassword(id: string, temporaryPassword: string): Promise<UserSummary> {
     return toUser(await apiPost<UserSummaryDto>(`/admin/users/${id}/password`, { temporary_password: temporaryPassword }))
   },

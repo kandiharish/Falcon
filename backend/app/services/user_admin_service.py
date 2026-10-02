@@ -162,3 +162,24 @@ def set_temporary_password(
     )
     db.commit()
     return user
+
+
+def reset_mfa(db: Session, admin: User, user_id: uuid.UUID, context: RequestContext) -> User:
+    """For a lost phone with no recovery codes: MFA off, all sessions ended. The user sets it
+    up again after signing in with their password."""
+    from app.services import mfa_service
+
+    user = _get(db, user_id)
+    mfa_service.clear(user)
+    ended = revoke_sessions(db, user.id)
+    audit_service.record(
+        db,
+        "user.mfa_reset",
+        actor=admin,
+        object_type="user",
+        object_id=user.email,
+        note=f"{ended} session(s) ended",
+        context=context,
+    )
+    db.commit()
+    return user

@@ -43,7 +43,7 @@ Legend: ✅ in use now · 🔜 planned (phase)
 | TanStack Table + Virtual | — | 🔜 P4–P5 | Large data tables | Renders only visible rows (thousands of evidence items). |
 | React Hook Form + Zod | 7 / 4 | ✅ P3 | Forms + validation | One schema = type + runtime validation. |
 | openapi-typescript | 7.13 (via npx) | ✅ P4 | Generate TS types from the API (`npm run api:types`) | Frontend and backend types can never drift apart. Run through npx because it officially supports TypeScript 5 only. |
-| Recharts | — | 🔜 P11 | Dashboard charts | Simple, good for aggregate statistics. |
+| Own bar/column charts (plain HTML + Tailwind) | — | ✅ P11 | Dashboard charts | *Replaced Recharts:* a few bars and columns need no library (~0 kB vs ~100 kB). Each chart also states its numbers in words for screen readers. |
 | FALCON TimelineChart (own component) | — | ✅ P7 | Zoomable, pannable timeline with lanes | *Replaced vis-timeline* (needs 9 peer packages incl. moment; hard to theme and make keyboard-accessible). ~250 lines, every event a real button. |
 | Leaflet 1.9 + react-leaflet 5 + OpenStreetMap tiles | — | ✅ P7 | Map of located events, entity movement, replay slider | Free, no API key (Google Maps requires billing). Map code is lazy-loaded. |
 | leaflet.markercluster | 1.5 | ✅ P7 | Groups nearby points into numbered bubbles | Keeps maps readable with many events. |
@@ -68,7 +68,9 @@ Legend: ✅ in use now · 🔜 planned (phase)
 | filetype | 1.2 | ✅ P5 | Detect real file type from content ("magic bytes") | Pure Python (no system library needed on Windows), unlike python-magic. |
 | Alembic | 1.x | ✅ P3 | Database migrations | Version control for the database structure; migrations also build the test database. |
 | argon2-cffi | — | ✅ P3 | Password hashing | Current best practice (Argon2id), OWASP-recommended. |
-| pyotp | — | 🔜 P11 | TOTP multi-factor codes | Works with any authenticator app. The user table is already MFA-ready. |
+| Own TOTP (RFC 6238, ~20 lines of HMAC-SHA1) | — | ✅ P11 | Multi-factor codes for any authenticator app | *Replaced pyotp:* small enough to own and to learn from; verified against the RFC's official test vectors. Replay of a used code blocked; ±30 s clock drift allowed. |
+| cryptography (AES-256-GCM) | 50 | ✅ P11 | Encrypts MFA secrets at rest; key in `FALCON_SECRET_KEY` (environment only) | The standard Python crypto library; authenticated encryption detects tampering. |
+| segno | 1.6 | ✅ P11 | QR code (SVG) for authenticator set-up | Pure Python, tiny, BSD licence. |
 | Server-side sessions (httpOnly cookie) | — | ✅ P3 | Sign-in state | Revocable instantly; the database stores only a SHA-256 hash of each token. Chosen over JWT, which cannot be revoked before it expires. |
 | Postgres job queue (`FOR UPDATE SKIP LOCKED`) | — | ✅ P5 | Background processing (`python -m app.worker`) | The ProcessingJob table *is* the queue — no Redis/Celery to run. Tested with two competing workers. |
 

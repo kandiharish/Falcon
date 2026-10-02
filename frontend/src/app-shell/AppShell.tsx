@@ -26,7 +26,8 @@ import { useValidCurrentInvestigation } from './useValidCurrentInvestigation'
 export function AppShell() {
   const { pathname } = useLocation()
   const current = findNavItem(pathname)
-  const pageLabel = pathname === '/design-system' ? 'Design system' : (current?.label ?? 'Not found')
+  const pageLabel =
+    pathname === '/design-system' ? 'Design system' : pathname === '/account/security' ? 'Account security' : (current?.label ?? 'Not found')
   useValidCurrentInvestigation()
 
   return (

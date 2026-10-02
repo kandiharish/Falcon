@@ -13,6 +13,7 @@ import {
   Monitor,
   Moon,
   Palette,
+  ShieldCheck,
   Sun,
   TriangleAlert,
   Waypoints,
@@ -195,6 +196,10 @@ export function UserMenu() {
           <p className="text-xs font-normal">{user.email}</p>
           <p className="text-xs font-normal">Role: {roleLabels[user.role]}</p>
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link to="/account/security"><ShieldCheck /> Account security{!user.mfaEnabled && <span className="ml-auto text-xs text-warning">MFA off</span>}</Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuLabel>Appearance</DropdownMenuLabel>
         <DropdownMenuRadioGroup

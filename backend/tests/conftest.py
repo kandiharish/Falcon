@@ -12,6 +12,8 @@ from collections.abc import Callable, Iterator
 os.environ["POSTGRES_DB"] = "falcon_test"
 # Evidence files written by tests go to a throw-away folder, never the real storage/.
 os.environ["STORAGE_DIR"] = tempfile.mkdtemp(prefix="falcon-test-storage-")
+# A fixed, test-only key for encrypting MFA secrets (never the real one from .env).
+os.environ["FALCON_SECRET_KEY"] = "test-only-key-not-a-real-secret"
 
 import pytest  # noqa: E402
 from alembic import command  # noqa: E402

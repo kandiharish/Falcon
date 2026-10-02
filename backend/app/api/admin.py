@@ -117,6 +117,11 @@ def reset_password(
     return _summary(user)
 
 
+@router.post("/admin/users/{user_id}/reset-mfa", response_model=UserSummary)
+def reset_mfa(user_id: uuid.UUID, request: Request, admin: UserManager, db: DB) -> UserSummary:
+    return _summary(user_admin_service.reset_mfa(db, admin, user_id, request_context(request)))
+
+
 # ---------- Audit log -----------------------------------------------------------------------
 
 

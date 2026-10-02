@@ -31,7 +31,7 @@ def test_login_sets_secure_session_cookie_and_returns_permissions(client, make_u
     response = login(client, user.email)
 
     assert response.status_code == 200
-    body = response.json()
+    body = response.json()["user"]  # without MFA the user comes back at once
     assert body["email"] == user.email
     assert "audit:read" in body["permissions"]
     cookie = response.headers["set-cookie"]
@@ -140,7 +140,7 @@ def test_user_list_requires_users_read_permission(client, make_user, role, expec
 
 def test_admin_cannot_read_evidence_least_privilege(client, make_user):
     admin = make_user(role="system_admin")
-    body = login(client, admin.email).json()
+    body = login(client, admin.email).json()["user"]
     assert "evidence:read" not in body["permissions"]
     assert "users:manage" in body["permissions"]
 

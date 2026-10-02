@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { Navigate, useNavigate, useSearchParams } from 'react-router'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Eye, EyeOff, FileLock2, Fingerprint, Lock, ScrollText, ShieldCheck } from 'lucide-react'
+import { Eye, EyeOff, FileLock2, Fingerprint, KeyRound, Lock, ScrollText, ShieldCheck } from 'lucide-react'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -18,7 +18,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AppLoading } from '@/app-shell/AppLoading'
 import { ApiError } from '@/services/apiClient'
-import { useCurrentUser, useLogin } from '@/services/queries'
+import { AuthService } from '@/services/authService'
+import { useCurrentUser, useLogin, useVerifyCode } from '@/services/queries'
 import { cn } from '@/lib/utils'
 
 // One schema = the TypeScript type AND the runtime validation rules.
@@ -48,6 +49,7 @@ export function LoginPage() {
   const navigate = useNavigate()
   const login = useLogin()
   const [showPassword, setShowPassword] = useState(false)
+  const [mfaStep, setMfaStep] = useState(false)
   const next = safeNextPath(params.get('next'))
 
   const form = useForm<LoginForm>({
@@ -59,7 +61,9 @@ export function LoginPage() {
   if (user) return <Navigate to={next} replace />
 
   const onSubmit = form.handleSubmit((values) =>
-    login.mutate(values, { onSuccess: () => navigate(next, { replace: true }) }),
+    login.mutate(values, {
+      onSuccess: (result) => (result.mfaRequired ? setMfaStep(true) : navigate(next, { replace: true })),
+    }),
   )
 
   const serverError =
@@ -114,6 +118,9 @@ export function LoginPage() {
             <p className="text-sm text-muted-foreground">Use your FALCON account to continue.</p>
           </div>
 
+          {mfaStep ? (
+            <CodeStep onDone={() => navigate(next, { replace: true })} onBack={() => setMfaStep(false)} />
+          ) : (
           <form onSubmit={onSubmit} noValidate className="space-y-4">
             {serverError && (
               <div role="alert" className="rounded-md border border-destructive/25 bg-destructive/5 px-3 py-2 text-sm">
@@ -189,12 +196,13 @@ export function LoginPage() {
               {login.isPending ? 'Signing in…' : 'Sign in'}
             </Button>
           </form>
+          )}
 
           <div className="flex items-start gap-2 rounded-md bg-muted/60 p-3 text-xs text-muted-foreground">
             <ShieldCheck aria-hidden className="mt-0.5 size-4 shrink-0 text-success" />
             <p>
               Authorized personnel only. Sign-ins and activity are recorded in the audit log.
-              Multi-factor authentication can be enabled for your account by an administrator.
+              Turn on multi-factor authentication under Account security after signing in.
             </p>
           </div>
 
@@ -202,6 +210,42 @@ export function LoginPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+/** Second sign-in step: the code from the authenticator app (or a one-time recovery code). */
+function CodeStep({ onDone, onBack }: { onDone: () => void; onBack: () => void }) {
+  const verify = useVerifyCode()
+  const [code, setCode] = useState('')
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault()
+    verify.mutate(code.trim(), { onSuccess: onDone })
+  }
+  const back = async () => {
+    await AuthService.logout().catch(() => undefined) // end the half-signed-in session
+    onBack()
+  }
+  return (
+    <form onSubmit={submit} className="space-y-4">
+      <div className="space-y-1">
+        <h3 className="flex items-center gap-2 font-semibold"><KeyRound aria-hidden className="size-4" /> Verification code</h3>
+        <p className="text-sm text-muted-foreground">Open your authenticator app and type the 6-digit code for FALCON. Lost your phone? Type one of your recovery codes instead.</p>
+      </div>
+      {verify.error && (
+        <div role="alert" className="rounded-md border border-destructive/25 bg-destructive/5 px-3 py-2 text-sm">
+          {verify.error instanceof ApiError && verify.error.status === 401 ? 'That code is not right, or the sign-in took too long. Try the newest code.' : 'Verification failed. Try again.'}
+        </div>
+      )}
+      <div className="space-y-1.5">
+        <Label htmlFor="mfa-code">Code</Label>
+        <Input id="mfa-code" value={code} onChange={(e) => setCode(e.target.value)} autoFocus autoComplete="one-time-code"
+          inputMode="text" maxLength={20} placeholder="123 456" className="text-center font-mono text-lg tracking-[0.3em]" />
+      </div>
+      <Button type="submit" className="w-full" size="lg" disabled={verify.isPending || code.trim().length < 6}>
+        <ShieldCheck /> {verify.isPending ? 'Checking…' : 'Verify and sign in'}
+      </Button>
+      <Button type="button" variant="ghost" className="w-full" onClick={back}>Use a different account</Button>
+    </form>
   )
 }
 

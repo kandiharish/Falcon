@@ -15,6 +15,7 @@ export type UserDialogState =
   | { kind: 'edit'; user: UserSummary }
   | { kind: 'password'; user: UserSummary }
   | { kind: 'active'; user: UserSummary }
+  | { kind: 'reset-mfa'; user: UserSummary }
   | null
 
 const MIN_PASSWORD = 12
@@ -46,6 +47,8 @@ export function UserDialogs({ state, onClose }: { state: NonNullable<UserDialogS
       admin.mutate({ kind: 'update', id: state.user.id, input: { display_name: name, role } }, done('Saved'))
     } else if (state.kind === 'password') {
       admin.mutate({ kind: 'password', id: state.user.id, password }, done('Temporary password set'))
+    } else if (state.kind === 'reset-mfa') {
+      admin.mutate({ kind: 'reset-mfa', id: state.user.id }, done(`MFA reset for ${state.user.displayName}`))
     } else {
       admin.mutate(
         { kind: 'update', id: state.user.id, input: { is_active: !state.user.isActive } },
@@ -54,11 +57,12 @@ export function UserDialogs({ state, onClose }: { state: NonNullable<UserDialogS
     }
   }
 
-  const title = { create: 'New user', edit: 'Edit user', password: 'Set a temporary password', active: user?.isActive ? 'Deactivate account?' : 'Reactivate account?' }[state.kind]
+  const title = { create: 'New user', edit: 'Edit user', password: 'Set a temporary password', 'reset-mfa': 'Reset multi-factor authentication?', active: user?.isActive ? 'Deactivate account?' : 'Reactivate account?' }[state.kind]
   const description = {
     create: 'They sign in with the temporary password you set here. Give it to them in person or by phone, never by email.',
     edit: 'Changing the role ends their current sessions, so the new permissions apply immediately.',
     password: `${user?.displayName} is signed out everywhere and must use this password next time.`,
+    'reset-mfa': `Only for a lost phone with no recovery codes. Check who is asking first (in person or by a known phone number): ${user?.displayName} is signed out and can sign in with just the password until they set MFA up again.`,
     active: user?.isActive
       ? `${user?.displayName} is signed out everywhere and cannot sign in until reactivated. Their work and audit history stay.`
       : `${user?.displayName} will be able to sign in again.`,
@@ -108,9 +112,9 @@ export function UserDialogs({ state, onClose }: { state: NonNullable<UserDialogS
         </form>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button type="submit" form="user-form" variant={state.kind === 'active' && user?.isActive ? 'destructive' : 'default'}
+          <Button type="submit" form="user-form" variant={(state.kind === 'active' && user?.isActive) || state.kind === 'reset-mfa' ? 'destructive' : 'default'}
             disabled={admin.isPending || (needsPassword && password.length < MIN_PASSWORD)}>
-            {state.kind === 'create' ? 'Create user' : state.kind === 'active' ? (user?.isActive ? 'Deactivate' : 'Reactivate') : 'Save'}
+            {state.kind === 'create' ? 'Create user' : state.kind === 'active' ? (user?.isActive ? 'Deactivate' : 'Reactivate') : state.kind === 'reset-mfa' ? 'Reset MFA' : 'Save'}
           </Button>
         </DialogFooter>
       </DialogContent>

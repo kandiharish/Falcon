@@ -100,10 +100,15 @@ def sign_in(
         if remember
         else timedelta(hours=settings.session_hours)
     )
+    # With MFA on, the password alone gives a short "pending" session that can only
+    # submit the code (mfa_service.verify_sign_in turns it into a full session).
+    pending = user.mfa_enabled
     session = UserSession(
         user=user,
         token_hash=hash_token(token),
-        expires_at=now + lifetime,
+        expires_at=now + (timedelta(minutes=settings.mfa_pending_minutes) if pending else lifetime),
+        mfa_pending=pending,
+        remember=remember,
         ip_address=context.ip_address,
         user_agent=context.user_agent,
     )
@@ -111,7 +116,7 @@ def sign_in(
     db.flush()  # assigns session.id for the audit record
     audit_service.record(
         db,
-        "auth.login_succeeded",
+        "auth.mfa_challenged" if pending else "auth.login_succeeded",
         actor=user,
         session_id=session.id,
         note="remembered device" if remember else None,
@@ -121,8 +126,11 @@ def sign_in(
     return SignInResult(token=token, session=session, user=user)
 
 
-def session_for_token(db: Session, token: str) -> UserSession | None:
-    """A valid, unexpired, unrevoked session for an active user — or None."""
+def session_for_token(
+    db: Session, token: str, allow_mfa_pending: bool = False
+) -> UserSession | None:
+    """A valid, unexpired, unrevoked session for an active user — or None.
+    Sessions still waiting for their MFA code count only where allow_mfa_pending is set."""
     session = db.scalar(select(UserSession).where(UserSession.token_hash == hash_token(token)))
     now = _now()
     if (
@@ -130,6 +138,7 @@ def session_for_token(db: Session, token: str) -> UserSession | None:
         or session.revoked_at is not None
         or session.expires_at <= now
         or not session.user.is_active
+        or (session.mfa_pending and not allow_mfa_pending)
     ):
         return None
     # Record activity, at most once a minute (avoids a database write on every request).
@@ -143,5 +152,38 @@ def sign_out(db: Session, session: UserSession, context: RequestContext) -> None
     session.revoked_at = _now()
     audit_service.record(
         db, "auth.logout", actor=session.user, session_id=session.id, context=context
+    )
+    db.commit()
+
+
+def active_sessions(db: Session, user: User) -> list[UserSession]:
+    return list(
+        db.scalars(
+            select(UserSession)
+            .where(
+                UserSession.user_id == user.id,
+                UserSession.revoked_at.is_(None),
+                UserSession.expires_at > _now(),
+                UserSession.mfa_pending.is_(False),
+            )
+            .order_by(UserSession.last_seen_at.desc())
+        )
+    )
+
+
+def revoke_own_session(
+    db: Session, user: User, session_id, current: UserSession, context: RequestContext
+) -> None:
+    target = db.get(UserSession, session_id)
+    if target is None or target.user_id != user.id:  # only ever your own
+        raise AuthenticationError("No such session.")
+    target.revoked_at = _now()
+    audit_service.record(
+        db,
+        "auth.session_revoked",
+        actor=user,
+        session_id=current.id,
+        note="this session" if target.id == current.id else f"other session {target.id}",
+        context=context,
     )
     db.commit()

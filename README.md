@@ -25,7 +25,8 @@ phase-by-phase learning notes are in [docs/learning/](docs/learning/).
 | P8 Correlation engine: explainable scores, analyst review | ✅ |
 | P9 Relationship graph: explainable links, focus, list view | ✅ |
 | P10 Local AI: plain-words search, similar evidence, Investigation Assistant agent | ✅ |
-| P11 Reports, dashboard, global search, audit UI, MFA | next |
+| P11 Tasks, notifications, reports, dashboard, global search, audit log, user management, MFA | ✅ |
+| P12 Security hardening, tests, performance, free deployment | next |
 
 ## Prerequisites
 

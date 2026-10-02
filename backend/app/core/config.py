@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     session_remember_days: int = 7  # "Remember this device"
     login_max_failures: int = 5
     login_lockout_minutes: int = 15
+    mfa_pending_minutes: int = 5  # time to type the code after the password
+
+    # Encrypts MFA secrets at rest. Only in the environment (.env), never in the database.
+    falcon_secret_key: SecretStr | None = None
 
     # --- Evidence storage ---
     # Original evidence files live here (outside the code, ignored by Git).
