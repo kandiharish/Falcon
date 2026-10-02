@@ -33,6 +33,14 @@ const builtPages: Record<string, RouteObject['lazy']> = {
     const { EvidencePage } = await import('@/features/evidence/EvidencePage')
     return { Component: () => guard(navItem('evidence'), <EvidencePage />) }
   },
+  entities: async () => {
+    const { EntitiesPage } = await import('@/features/extraction/EntitiesPage')
+    return { Component: () => guard(navItem('entities'), <EntitiesPage />) }
+  },
+  events: async () => {
+    const { EventsPage } = await import('@/features/extraction/EventsPage')
+    return { Component: () => guard(navItem('events'), <EventsPage />) }
+  },
   admin: async () => {
     const { UsersPage } = await import('@/features/admin/UsersPage')
     return { Component: () => guard(navItem('admin'), <UsersPage />) }
@@ -88,6 +96,13 @@ export const router = createBrowserRouter([
             lazy: async () => {
               const { EvidenceDetailPage } = await import('@/features/evidence/EvidenceDetailPage')
               return { Component: () => guard(navItem('evidence'), <EvidenceDetailPage />) }
+            },
+          },
+          {
+            path: 'investigations/:reference/entities/:entityRef',
+            lazy: async () => {
+              const { EntityDetailPage } = await import('@/features/extraction/EntityDetailPage')
+              return { Component: () => guard(navItem('entities'), <EntityDetailPage />) }
             },
           },
           {

@@ -13,7 +13,6 @@ from datetime import UTC, datetime
 from typing import BinaryIO
 
 from sqlalchemy import func, or_, select
-from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
@@ -21,11 +20,11 @@ from app.core.config import get_settings
 from app.models import (
     AuditLog,
     Evidence,
-    EvidenceReferenceCounter,
     Investigation,
     ProcessingJob,
     User,
 )
+from app.repositories import reference_counters
 from app.security.permissions import Permission, Role, permissions_for
 from app.services import audit_service, investigation_service
 from app.services.errors import (
@@ -188,19 +187,7 @@ def upload(
 
 def _next_reference(db: Session, investigation_id: uuid.UUID, evidence_type: str) -> str:
     prefix = REFERENCE_PREFIX[evidence_type]
-    value = db.execute(
-        insert(EvidenceReferenceCounter)
-        .values(investigation_id=investigation_id, prefix=prefix, last_value=1)
-        .on_conflict_do_update(
-            index_elements=[
-                EvidenceReferenceCounter.investigation_id,
-                EvidenceReferenceCounter.prefix,
-            ],
-            set_={"last_value": EvidenceReferenceCounter.last_value + 1},
-        )
-        .returning(EvidenceReferenceCounter.last_value)
-    ).scalar_one()
-    return f"{prefix}-{value:03d}"
+    return f"{prefix}-{reference_counters.next_value(db, investigation_id, prefix):03d}"
 
 
 def _validate_coordinates(latitude: float | None, longitude: float | None) -> None:

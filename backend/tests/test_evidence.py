@@ -1,74 +1,26 @@
 """Evidence tests: upload, integrity, duplicates, file-type checks, permissions, processing."""
 
 import hashlib
-import io
 import os
 import stat
 import threading
 import uuid
 
 import pytest
-from fastapi.testclient import TestClient
-from PIL import Image
-from PIL.TiffImagePlugin import IFDRational
 from sqlalchemy import select
 
 from app.core.config import get_settings
 from app.db.session import SessionLocal
 from app.models import AuditLog, Evidence, ProcessingJob
 from app.storage import local as storage
-from app.worker import claim_next_job, process_job_by_id, requeue_stale_jobs
-from tests.test_investigations import create_case, signed_in
-
-CALLS_CSV = (
-    b"caller,callee,started_at,duration_s\n"
-    b"+15550100001,+15550100002,2026-09-28T20:33:00,95\n"
-    b"+15550100002,+15550100003,2026-09-28T21:02:00,40\n"
+from app.worker import claim_next_job, requeue_stale_jobs
+from tests.helpers import (
+    CALLS_CSV,
+    jpeg_with_exif,
+    process_latest_job,
+    signed_in,
+    upload,
 )
-
-
-def jpeg_with_exif(color: str = "navy", utc_offset: str | None = "+05:30") -> bytes:
-    image = Image.new("RGB", (64, 48), color)
-    exif = Image.Exif()
-    exif[0x010F] = "FictionalCam"
-    exif.get_ifd(0x8769)[0x9003] = "2026:09:28 20:30:00"  # camera clock (local time)
-    if utc_offset:
-        exif.get_ifd(0x8769)[0x9011] = utc_offset  # OffsetTimeOriginal
-    r = IFDRational
-    exif[0x8825] = {1: "N", 2: (r(17), r(23), r(6)), 3: "E", 4: (r(78), r(29), r(1212, 100))}
-    buffer = io.BytesIO()
-    image.save(buffer, "JPEG", exif=exif)
-    return buffer.getvalue()
-
-
-def upload(client: TestClient, case: str, data: bytes, name: str, evidence_type: str, **fields):
-    return client.post(
-        f"/api/investigations/{case}/evidence",
-        files={"file": (name, data)},
-        data={"evidence_type": evidence_type, **fields},
-    )
-
-
-def process_latest_job(case: str, reference: str) -> None:
-    with SessionLocal() as db:
-        job_id = db.scalar(
-            select(ProcessingJob.id)
-            .join(Evidence)
-            .where(Evidence.reference == reference, ProcessingJob.status == "queued")
-            .where(Evidence.investigation.has(reference=case))
-        )
-    process_job_by_id(job_id)
-
-
-@pytest.fixture
-def team(make_user):
-    """An officer (lead) with an analyst on the team, and a fresh case."""
-    officer_user = make_user("investigation_officer")
-    analyst_user = make_user("forensic_analyst")
-    officer = signed_in(officer_user)
-    case = create_case(officer)["reference"]
-    officer.post(f"/api/investigations/{case}/members", json={"email": analyst_user.email})
-    return {"officer": officer, "analyst": signed_in(analyst_user), "case": case}
 
 
 def test_upload_fingerprints_stores_read_only_and_queues_processing(team):
@@ -111,7 +63,7 @@ def test_processing_extracts_exif_without_overwriting_user_values(team):
     assert body["file_metadata"]["image"]["provenance"]["latitude"].startswith("extracted")
     assert body["integrity_ok"] is True
     steps = [s["name"] for s in body["latest_job"]["steps"]]
-    assert steps == ["integrity", "image_metadata", "image_preview"]
+    assert steps == ["integrity", "image_metadata", "entities_events", "image_preview"]
     assert body["latest_job"]["progress"] == 100
 
     preview = team["officer"].get(f"/api/investigations/{case}/evidence/IMG-001/preview")

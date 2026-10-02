@@ -11,7 +11,14 @@ from typing import Any
 
 from PIL import ExifTags, Image, UnidentifiedImageError
 
+from app.extraction.text import has_document_text
 from app.models import Evidence
+from app.processing.extraction_steps import (
+    extract_document_text,
+    extract_entities_and_events,
+    extract_video_metadata,
+    is_video,
+)
 from app.processing.pipeline import Step, StepContext, StepFailed, merge_metadata
 from app.storage import local as storage
 
@@ -147,11 +154,19 @@ def is_text(evidence: Evidence) -> bool:
     return evidence.media_type.startswith("text/") or evidence.media_type in TEXT_MEDIA_TYPES
 
 
+def _structured_text(evidence: Evidence) -> bool:
+    """Text that is a record file (CSV, JSON …), not a document to be read as prose."""
+    return is_text(evidence) and not has_document_text(evidence)
+
+
 # Steps run in this order; each decides from the file's real content whether it applies.
 STEPS: list[Step] = [
     Step("integrity", "Validation", validate_integrity),
     Step("image_metadata", "Metadata extraction", extract_image_metadata, is_image),
-    Step("text_metadata", "Metadata extraction", extract_text_metadata, is_text),
+    Step("video_metadata", "Metadata extraction", extract_video_metadata, is_video),
+    Step("text_metadata", "Metadata extraction", extract_text_metadata, _structured_text),
+    Step("document_text", "Text extraction", extract_document_text, has_document_text),
+    Step("entities_events", "Entity & event extraction", extract_entities_and_events),
     Step("image_preview", "Preview generation", build_image_preview, is_image),
 ]
 

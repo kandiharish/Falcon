@@ -20,7 +20,8 @@ phase-by-phase learning notes are in [docs/learning/](docs/learning/).
 | P3 Authentication, roles, audit foundation | ✅ |
 | P4 Investigation management (real data, team isolation, audit history) | ✅ |
 | P5 Evidence upload, integrity (SHA-256), background processing | ✅ |
-| P6 Information extraction: entities and events | next |
+| P6 Extraction: entities, events, OCR, provenance, analyst observations | ✅ |
+| P7 Timeline and map | next |
 
 ## Prerequisites
 

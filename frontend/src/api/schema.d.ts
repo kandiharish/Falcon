@@ -337,6 +337,127 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/investigations/{case_reference}/entities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Entities */
+        get: operations["list_entities_api_investigations__case_reference__entities_get"];
+        put?: never;
+        /** Create Entity */
+        post: operations["create_entity_api_investigations__case_reference__entities_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/entities/{reference}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Entity */
+        get: operations["get_entity_api_investigations__case_reference__entities__reference__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/entities/{reference}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Review Entity */
+        post: operations["review_entity_api_investigations__case_reference__entities__reference__review_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Events */
+        get: operations["list_events_api_investigations__case_reference__events_get"];
+        put?: never;
+        /** Create Event */
+        post: operations["create_event_api_investigations__case_reference__events_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/events/{reference}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Event */
+        get: operations["get_event_api_investigations__case_reference__events__reference__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/events/{reference}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Review Event */
+        post: operations["review_event_api_investigations__case_reference__events__reference__review_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/evidence/{evidence_reference}/extracted": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Extracted Information */
+        get: operations["extracted_information_api_investigations__case_reference__evidence__evidence_reference__extracted_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -462,6 +583,211 @@ export interface components {
                 [key: string]: string | null;
             };
         };
+        /** EntityCreate */
+        EntityCreate: {
+            /**
+             * Entity Type
+             * @enum {string}
+             */
+            entity_type: "person" | "phone_number" | "device" | "vehicle" | "account" | "location" | "organization" | "digital_artifact";
+            /** Value */
+            value: string;
+            /** Evidence Reference */
+            evidence_reference: string;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
+        /** EntityDetail */
+        EntityDetail: {
+            /** Reference */
+            reference: string;
+            /**
+             * Entity Type
+             * @enum {string}
+             */
+            entity_type: "person" | "phone_number" | "device" | "vehicle" | "account" | "location" | "organization" | "digital_artifact";
+            /** Label */
+            label: string;
+            /**
+             * Review Status
+             * @enum {string}
+             */
+            review_status: "pending" | "confirmed" | "rejected";
+            /** Mention Count */
+            mention_count: number;
+            /** Evidence Count */
+            evidence_count: number;
+            /** Event Count */
+            event_count: number;
+            /** Max Confidence */
+            max_confidence: number | null;
+            /** Assertion Kinds */
+            assertion_kinds: ("fact" | "extracted" | "detected" | "correlated" | "inferred" | "user_entered")[];
+            /** Attributes */
+            attributes: {
+                [key: string]: unknown;
+            };
+            /** Added Manually */
+            added_manually: boolean;
+            /** Mentions */
+            mentions: components["schemas"]["MentionOut"][];
+            /** Events */
+            events: components["schemas"]["EventOut"][];
+        };
+        /** EntityMentionOut */
+        EntityMentionOut: {
+            entity: components["schemas"]["EntityRef"];
+            /**
+             * Assertion Kind
+             * @enum {string}
+             */
+            assertion_kind: "fact" | "extracted" | "detected" | "correlated" | "inferred" | "user_entered";
+            /** Confidence */
+            confidence: number;
+            /** Extractor */
+            extractor: string;
+            /** Source Location */
+            source_location: string;
+            /** Context */
+            context: string;
+        };
+        /** EntityPage */
+        EntityPage: {
+            /** Items */
+            items: components["schemas"]["EntitySummary"][];
+            /** Total */
+            total: number;
+        };
+        /** EntityRef */
+        EntityRef: {
+            /** Reference */
+            reference: string;
+            /**
+             * Entity Type
+             * @enum {string}
+             */
+            entity_type: "person" | "phone_number" | "device" | "vehicle" | "account" | "location" | "organization" | "digital_artifact";
+            /** Label */
+            label: string;
+        };
+        /** EntitySummary */
+        EntitySummary: {
+            /** Reference */
+            reference: string;
+            /**
+             * Entity Type
+             * @enum {string}
+             */
+            entity_type: "person" | "phone_number" | "device" | "vehicle" | "account" | "location" | "organization" | "digital_artifact";
+            /** Label */
+            label: string;
+            /**
+             * Review Status
+             * @enum {string}
+             */
+            review_status: "pending" | "confirmed" | "rejected";
+            /** Mention Count */
+            mention_count: number;
+            /** Evidence Count */
+            evidence_count: number;
+            /** Event Count */
+            event_count: number;
+            /** Max Confidence */
+            max_confidence: number | null;
+            /** Assertion Kinds */
+            assertion_kinds: ("fact" | "extracted" | "detected" | "correlated" | "inferred" | "user_entered")[];
+            /** Attributes */
+            attributes: {
+                [key: string]: unknown;
+            };
+            /** Added Manually */
+            added_manually: boolean;
+        };
+        /** EventCreate */
+        EventCreate: {
+            /** Evidence Reference */
+            evidence_reference: string;
+            /**
+             * Event Type
+             * @enum {string}
+             */
+            event_type: "call_made" | "message_sent" | "transaction_completed" | "location_recorded" | "vehicle_detected" | "person_detected" | "device_detected" | "person_entered_location" | "photo_taken" | "video_recorded" | "document_created" | "communication" | "digital_artifact_created" | "other";
+            /** Occurred At */
+            occurred_at?: string | null;
+            /** Description */
+            description: string;
+            /** Participants */
+            participants?: components["schemas"]["ParticipantIn"][];
+            /** Latitude */
+            latitude?: number | null;
+            /** Longitude */
+            longitude?: number | null;
+            /**
+             * Location Text
+             * @default
+             */
+            location_text: string;
+        };
+        /** EventOut */
+        EventOut: {
+            /** Reference */
+            reference: string;
+            /**
+             * Event Type
+             * @enum {string}
+             */
+            event_type: "call_made" | "message_sent" | "transaction_completed" | "location_recorded" | "vehicle_detected" | "person_detected" | "device_detected" | "person_entered_location" | "photo_taken" | "video_recorded" | "document_created" | "communication" | "digital_artifact_created" | "other";
+            /** Occurred At */
+            occurred_at: string | null;
+            /** Ended At */
+            ended_at: string | null;
+            /** Latitude */
+            latitude: number | null;
+            /** Longitude */
+            longitude: number | null;
+            /** Location Text */
+            location_text: string;
+            /** Description */
+            description: string;
+            /** Evidence Reference */
+            evidence_reference: string;
+            /** Evidence Type */
+            evidence_type: string;
+            /**
+             * Assertion Kind
+             * @enum {string}
+             */
+            assertion_kind: "fact" | "extracted" | "detected" | "correlated" | "inferred" | "user_entered";
+            /** Confidence */
+            confidence: number;
+            /** Extractor */
+            extractor: string;
+            /** Source Location */
+            source_location: string;
+            /**
+             * Review Status
+             * @enum {string}
+             */
+            review_status: "pending" | "confirmed" | "rejected";
+            /** Attributes */
+            attributes: {
+                [key: string]: unknown;
+            };
+            /** Participants */
+            participants: components["schemas"]["Participant"][];
+            /** Added Manually */
+            added_manually: boolean;
+        };
+        /** EventPage */
+        EventPage: {
+            /** Items */
+            items: components["schemas"]["EventOut"][];
+            /** Total */
+            total: number;
+        };
         /** EvidenceOut */
         EvidenceOut: {
             /** Reference */
@@ -529,6 +855,15 @@ export interface components {
             limit: number;
             /** Offset */
             offset: number;
+        };
+        /** ExtractedInformation */
+        ExtractedInformation: {
+            /** Evidence Reference */
+            evidence_reference: string;
+            /** Mentions */
+            mentions: components["schemas"]["EntityMentionOut"][];
+            /** Events */
+            events: components["schemas"]["EventOut"][];
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -760,6 +1095,57 @@ export interface components {
              */
             added_at: string;
         };
+        /** MentionOut */
+        MentionOut: {
+            /** Evidence Reference */
+            evidence_reference: string;
+            /** Evidence Type */
+            evidence_type: string;
+            /** Evidence Description */
+            evidence_description: string;
+            /**
+             * Assertion Kind
+             * @enum {string}
+             */
+            assertion_kind: "fact" | "extracted" | "detected" | "correlated" | "inferred" | "user_entered";
+            /** Confidence */
+            confidence: number;
+            /** Extractor */
+            extractor: string;
+            /** Source Location */
+            source_location: string;
+            /** Context */
+            context: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** Participant */
+        Participant: {
+            /** Reference */
+            reference: string;
+            /**
+             * Entity Type
+             * @enum {string}
+             */
+            entity_type: "person" | "phone_number" | "device" | "vehicle" | "account" | "location" | "organization" | "digital_artifact";
+            /** Label */
+            label: string;
+            /** Role */
+            role: string;
+        };
+        /** ParticipantIn */
+        ParticipantIn: {
+            /** Entity Reference */
+            entity_reference: string;
+            /**
+             * Role
+             * @default involved
+             */
+            role: string;
+        };
         /** PersonRef */
         PersonRef: {
             /**
@@ -769,6 +1155,16 @@ export interface components {
             id: string;
             /** Display Name */
             display_name: string;
+        };
+        /** Review */
+        Review: {
+            /**
+             * Review Status
+             * @enum {string}
+             */
+            review_status: "pending" | "confirmed" | "rejected";
+            /** Note */
+            note?: string | null;
         };
         /** StatusChange */
         StatusChange: {
@@ -1509,6 +1905,321 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AuditEntry"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_entities_api_investigations__case_reference__entities_get: {
+        parameters: {
+            query?: {
+                entity_type?: ("person" | "phone_number" | "device" | "vehicle" | "account" | "location" | "organization" | "digital_artifact") | null;
+                search?: string | null;
+                review_status?: ("pending" | "confirmed" | "rejected") | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                case_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntityPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_entity_api_investigations__case_reference__entities_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EntityCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntityDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_entity_api_investigations__case_reference__entities__reference__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntityDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    review_entity_api_investigations__case_reference__entities__reference__review_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Review"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntityDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_events_api_investigations__case_reference__events_get: {
+        parameters: {
+            query?: {
+                event_type?: ("call_made" | "message_sent" | "transaction_completed" | "location_recorded" | "vehicle_detected" | "person_detected" | "device_detected" | "person_entered_location" | "photo_taken" | "video_recorded" | "document_created" | "communication" | "digital_artifact_created" | "other") | null;
+                entity?: string | null;
+                evidence?: string | null;
+                occurred_from?: string | null;
+                occurred_to?: string | null;
+                review_status?: ("pending" | "confirmed" | "rejected") | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                case_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_event_api_investigations__case_reference__events_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EventCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_event_api_investigations__case_reference__events__reference__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    review_event_api_investigations__case_reference__events__reference__review_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Review"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    extracted_information_api_investigations__case_reference__evidence__evidence_reference__extracted_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+                evidence_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExtractedInformation"];
                 };
             };
             /** @description Validation Error */

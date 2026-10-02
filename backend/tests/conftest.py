@@ -23,8 +23,7 @@ from app.core.config import get_settings  # noqa: E402
 from app.db.session import SessionLocal  # noqa: E402
 from app.models import User  # noqa: E402
 from app.security.passwords import hash_password  # noqa: E402
-
-TEST_PASSWORD = "correct horse battery staple"
+from tests.helpers import TEST_PASSWORD, create_case, signed_in  # noqa: E402
 
 
 def _create_test_database() -> None:
@@ -78,3 +77,14 @@ def make_user() -> Callable[..., User]:
             return user
 
     return _make
+
+
+@pytest.fixture
+def team(make_user):
+    """An officer (lead) with an analyst on the team, and a fresh case."""
+    officer_user = make_user("investigation_officer")
+    analyst_user = make_user("forensic_analyst")
+    officer = signed_in(officer_user)
+    case = create_case(officer)["reference"]
+    officer.post(f"/api/investigations/{case}/members", json={"email": analyst_user.email})
+    return {"officer": officer, "analyst": signed_in(analyst_user), "case": case}

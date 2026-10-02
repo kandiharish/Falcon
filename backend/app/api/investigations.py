@@ -14,7 +14,7 @@ from app.models import Investigation, User
 from app.repositories.investigation_repository import InvestigationFilters
 from app.security.dependencies import require_permission
 from app.security.permissions import Permission
-from app.services import evidence_service
+from app.services import evidence_service, extraction_service
 from app.services import investigation_service as service
 from app.services.request_context import request_context
 
@@ -113,7 +113,9 @@ class AssignableUser(BaseModel):
     role: str
 
 
-def _out(investigation: Investigation, viewer: User, evidence_count: int = 0) -> InvestigationOut:
+def _out(
+    investigation: Investigation, viewer: User, counts: dict[str, int] | None = None
+) -> InvestigationOut:
     mine = next((m for m in investigation.members if m.user_id == viewer.id), None)
     return InvestigationOut(
         reference=investigation.reference,
@@ -131,15 +133,20 @@ def _out(investigation: Investigation, viewer: User, evidence_count: int = 0) ->
         ),
         team_size=len(investigation.members),
         my_role_in_case=mine.role_in_case if mine else None,  # type: ignore[arg-type]
-        counts=InvestigationCounts(evidence=evidence_count),
+        counts=InvestigationCounts(**(counts or {})),
         created_at=investigation.created_at,
         updated_at=investigation.updated_at,
     )
 
 
+def _counts(db: Session, ids: list[uuid.UUID]) -> dict[uuid.UUID, dict[str, int]]:
+    evidence = evidence_service.counts_by_investigation(db, ids)
+    extracted = extraction_service.counts_by_investigation(db, ids)
+    return {i: {"evidence": evidence.get(i, 0), **extracted.get(i, {})} for i in ids}
+
+
 def _with_counts(db: Session, investigation: Investigation, user: User) -> InvestigationOut:
-    counts = evidence_service.counts_by_investigation(db, [investigation.id])
-    return _out(investigation, user, counts.get(investigation.id, 0))
+    return _out(investigation, user, _counts(db, [investigation.id])[investigation.id])
 
 
 # ---------- Routes ----------------------------------------------------------------------
@@ -157,9 +164,9 @@ def list_investigations(
 ) -> InvestigationPage:
     filters = InvestigationFilters(search=search or None, status=status_filter, priority=priority)
     items, total = service.list_investigations(db, user, filters, limit, offset)
-    counts = evidence_service.counts_by_investigation(db, [i.id for i in items])
+    counts = _counts(db, [i.id for i in items])
     return InvestigationPage(
-        items=[_out(i, user, counts.get(i.id, 0)) for i in items],
+        items=[_out(i, user, counts[i.id]) for i in items],
         total=total,
         limit=limit,
         offset=offset,

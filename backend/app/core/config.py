@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     storage_dir: Path = REPO_ROOT / "storage"
     max_upload_mb: int = 250
 
+    # --- Extraction ---
+    # Phone numbers written without a country code are read as numbers from this region.
+    default_phone_region: str = "IN"
+    ocr_enabled: bool = True
+
     # Password for the fictional demo users created by the seed script (development only)
     demo_password: SecretStr | None = None
 

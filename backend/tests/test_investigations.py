@@ -3,25 +3,8 @@
 import re
 
 import pytest
-from fastapi.testclient import TestClient
 
-from app.main import app
-from tests.conftest import TEST_PASSWORD
-
-
-def signed_in(user) -> TestClient:
-    """A separate browser (own cookie jar) signed in as `user`."""
-    client = TestClient(app, headers={"X-FALCON-Request": "1"})
-    response = client.post("/api/auth/login", json={"email": user.email, "password": TEST_PASSWORD})
-    assert response.status_code == 200
-    return client
-
-
-def create_case(client: TestClient, **fields):
-    body = {"title": "Riverside warehouse break-in", "case_type": "Burglary"} | fields
-    response = client.post("/api/investigations", json=body)
-    assert response.status_code == 201, response.text
-    return response.json()
+from tests.helpers import create_case, signed_in
 
 
 def test_officer_creates_draft_case_with_next_reference_and_is_lead(make_user):

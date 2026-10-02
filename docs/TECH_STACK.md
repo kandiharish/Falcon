@@ -90,12 +90,14 @@ AI **suggests**, humans **decide**. Every AI output is labelled (Extracted / Det
 
 | Capability | Model / tool | Type | Size | Status | Why |
 |---|---|---|---|---|---|
-| OCR (text in images/scans) | **Tesseract 5** with the `eng` LSTM model | Neural OCR | ~20 MB | 🔜 P6 | Free, mature, CPU-only. |
-| PDF text | **PyMuPDF** | Parser (no ML) | — | 🔜 P6 | Exact text from digital PDFs; OCR only for scans. |
+| OCR (text in images/scans) | **RapidOCR** (`rapidocr-onnxruntime` 1.4, PP-OCR models on ONNX Runtime) | Neural OCR | ~15 MB, bundled | ✅ P6 | *Replaced Tesseract:* pip-only (no Windows installer), Apache-2.0, offline. Spacing repaired for joined words. |
+| PDF text + page rendering for OCR | **pypdfium2** (Chrome's PDF engine) | Parser (no ML) | — | ✅ P6 | *Replaced PyMuPDF* (AGPL licence). Text layer first; pages without text go to OCR. |
+| Word documents | **python-docx** | Parser (no ML) | — | ✅ P6 | Paragraphs and tables of `.docx`. |
 | Photo metadata (GPS, time, camera) | **Pillow** EXIF reader | Parser (no ML) | — | ✅ P5 | Facts, not guesses → labelled *Extracted*; camera time-zone offset honoured. |
-| Video metadata | **FFmpeg `ffprobe`** | Parser (no ML) | — | 🔜 P6 | Duration, codec, creation time. |
-| Names, places, organisations in text | **spaCy `en_core_web_sm`** | Named-entity recognition model | ~12 MB | 🔜 P6 | Small, fast on CPU; upgradeable to `en_core_web_trf` for accuracy. |
-| Phone numbers, emails, plates, account IDs | **Regex + `phonenumbers`** (port of Google libphonenumber) | Rules (no ML) | — | 🔜 P6 | 100% explainable, no false "AI" confidence. |
+| Video metadata | **PyAV** (FFmpeg bundled in the wheel) | Parser (no ML) | — | ✅ P6 | *Replaced ffprobe:* nothing to install. Duration, codec, resolution, creation time. |
+| Names, places, organisations in text | **spaCy 3.8 `en_core_web_sm` 3.8.0** | Named-entity recognition model | ~12 MB | ✅ P6 | Small, fast on CPU. Results are DETECTED (≤0.6 confidence) and filtered: names must be capitalised. Upgradeable to `en_core_web_trf`. |
+| Phone numbers, emails, plates, account IDs | **`phonenumbers`** (port of Google libphonenumber) + patterns | Rules (no ML) | — | ✅ P6 | Explainable; numbers normalised to E.164 so the same phone in two files becomes one entity. |
+| Structured records (calls, GPS, transactions, plates) | **FALCON CSV extractors** with column aliases | Rules (no ML) | — | ✅ P6 | Rows become EXTRACTED entities and events (0.95; 0.8 when a time has no zone). |
 | Text similarity / duplicate documents | **sentence-transformers `all-MiniLM-L6-v2`** | Embedding model (384-dim vectors) | ~90 MB | 🔜 P10 | Small, CPU-friendly; vectors stored in pgvector. |
 | Near-duplicate images | **imagehash** (perceptual hash) | Algorithm (no ML) | — | 🔜 P10 | Detects resized/re-encoded copies. |
 | Natural-language search, summaries, Investigation Assistant agent | **Qwen3 8B** (`qwen3:8b`) via **Ollama** | Large language model with tool calling | ~5 GB (4-bit) | 🔜 P10 | Runs on 16 GB RAM; good tool calling. Fallback: `qwen3:4b` (~2.5 GB) on weaker machines. |

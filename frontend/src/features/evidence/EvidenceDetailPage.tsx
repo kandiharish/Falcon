@@ -34,6 +34,7 @@ import { ProcessingProgress } from '@/design-system/ProcessingProgress'
 import { EmptyState, ErrorState } from '@/design-system/states'
 import { auditActionLabels, evidenceTypeTerms } from '@/design-system/vocabulary'
 import { formatBytes, formatDateTime } from '@/lib/format'
+import { ExtractedTab } from '@/features/extraction/ExtractedTab'
 
 /** Evidence detail workspace (plan §12). */
 export function EvidenceDetailPage() {
@@ -115,12 +116,16 @@ export function EvidenceDetailPage() {
         <TabsList className="flex-wrap">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="preview">Preview</TabsTrigger>
+          <TabsTrigger value="extracted">Extracted information</TabsTrigger>
           <TabsTrigger value="metadata">Metadata</TabsTrigger>
           <TabsTrigger value="processing">Processing</TabsTrigger>
           <TabsTrigger value="integrity">Integrity</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="pt-4"><OverviewTab evidence={evidence} caseRef={caseRef} /></TabsContent>
+        <TabsContent value="extracted" className="pt-4">
+          <ExtractedTab caseRef={caseRef} evidenceRef={evidence.reference} processing={isProcessing(evidence)} />
+        </TabsContent>
         <TabsContent value="preview" className="pt-4"><PreviewTab evidence={evidence} caseRef={caseRef} /></TabsContent>
         <TabsContent value="metadata" className="pt-4"><MetadataTab evidence={evidence} /></TabsContent>
         <TabsContent value="processing" className="pt-4"><ProcessingTab evidence={evidence} /></TabsContent>
@@ -294,11 +299,25 @@ function PreviewTab({ evidence, caseRef }: { evidence: Evidence; caseRef: string
       </Card>
     )
   }
-  if (text?.text_preview) {
+  const document = evidence.fileMetadata.document as
+    | { text_preview?: string; method?: string; ocr_confidence?: number | null; pages?: number }
+    | undefined
+  const readable = document?.text_preview ?? text?.text_preview
+  if (readable) {
     return (
       <Card>
+        {document?.method && (
+          <CardHeader>
+            <CardTitle>Text</CardTitle>
+            <CardDescription>
+              {document.method.includes('ocr')
+                ? `Read by OCR from the scanned page(s) — average confidence ${Math.round((document.ocr_confidence ?? 0) * 100)}%. Check against the original.`
+                : `Read from the document (${document.pages ?? 1} page${document.pages === 1 ? '' : 's'}).`}
+            </CardDescription>
+          </CardHeader>
+        )}
         <CardContent>
-          <pre className="max-h-[60svh] overflow-auto rounded-md bg-muted p-3 font-mono text-xs whitespace-pre-wrap">{text.text_preview}</pre>
+          <pre className="max-h-[60svh] overflow-auto rounded-md bg-muted p-3 font-mono text-xs whitespace-pre-wrap">{readable}</pre>
         </CardContent>
       </Card>
     )
@@ -307,7 +326,11 @@ function PreviewTab({ evidence, caseRef }: { evidence: Evidence; caseRef: string
     <EmptyState
       icon={FileQuestion}
       title="No preview available"
-      description={isProcessing(evidence) ? 'The preview appears when processing finishes.' : 'Previews for this kind of file arrive in Phase 6 (documents, video).'}
+      description={
+        isProcessing(evidence)
+          ? 'The preview appears when processing finishes.'
+          : 'This kind of file has no on-screen preview. Download the original to view it; see Metadata for its details.'
+      }
     />
   )
 }
@@ -326,6 +349,21 @@ function MetadataTab({ evidence }: { evidence: Evidence }) {
   }
   const text = evidence.fileMetadata.text as Record<string, unknown> | undefined
   if (text?.columns) rows.push(['Columns', (text.columns as string[]).join(', ')], ['Data rows', String(text.row_count)])
+  const video = evidence.fileMetadata.video as Record<string, unknown> | undefined
+  if (video) {
+    rows.push(
+      ['Duration', `${video.duration_s ?? '?'} s`],
+      ['Resolution', `${video.width} × ${video.height} px`],
+      ['Codec', String(video.codec ?? '—')],
+      ['Frame rate', video.frame_rate ? `${Number(video.frame_rate).toFixed(1)} fps` : '—'],
+      ['Recording time in file', String(video.creation_time ?? 'not recorded')],
+    )
+  }
+  const doc = evidence.fileMetadata.document as Record<string, unknown> | undefined
+  if (doc) {
+    rows.push(['Pages', String(doc.pages)], ['Characters of text', String(doc.characters)], ['Text read by', String(doc.method)])
+    if (doc.ocr_confidence) rows.push(['OCR confidence', `${Math.round(Number(doc.ocr_confidence) * 100)}%`])
+  }
 
   return (
     <Card>

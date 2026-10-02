@@ -14,6 +14,8 @@ import { AdminService } from './adminService'
 import { ApiError } from './apiClient'
 import { AuthService, type LoginInput } from './authService'
 import { EvidenceService, isProcessing, type EvidenceQuery, type NewEvidence } from './evidenceService'
+import { ExtractionService, type EntityQuery, type EventQuery, type NewAnnotation } from './extractionService'
+import type { EntityType, ReviewStatus } from '@/domain/types'
 import {
   InvestigationService,
   type InvestigationChanges,
@@ -182,4 +184,78 @@ export const useEvidenceAction = (caseRef: string, ref: string) =>
       return EvidenceService.changeStatus(caseRef, ref, action.status, action.note)
     },
     onSuccess: () => refreshEvidence(caseRef),
+  })
+
+// ---------- Entities & events -------------------------------------------------------------
+
+export const extractionKeys = {
+  all: (caseRef: string) => ['extraction', caseRef] as const,
+  entities: (caseRef: string, query: EntityQuery) => ['extraction', caseRef, 'entities', query] as const,
+  entity: (caseRef: string, ref: string) => ['extraction', caseRef, 'entity', ref] as const,
+  events: (caseRef: string, query: EventQuery) => ['extraction', caseRef, 'events', query] as const,
+  extracted: (caseRef: string, evidenceRef: string) => ['extraction', caseRef, 'extracted', evidenceRef] as const,
+}
+
+export const useEntities = (caseRef: string | null, query: EntityQuery = {}) =>
+  useQuery({
+    queryKey: extractionKeys.entities(caseRef ?? 'none', query),
+    queryFn: () => ExtractionService.listEntities(caseRef as string, query),
+    enabled: caseRef !== null,
+    placeholderData: keepPreviousData,
+  })
+
+export const useEntity = (caseRef: string, ref: string) =>
+  useQuery({ queryKey: extractionKeys.entity(caseRef, ref), queryFn: () => ExtractionService.getEntity(caseRef, ref) })
+
+export const useEvents = (caseRef: string | null, query: EventQuery = {}) =>
+  useQuery({
+    queryKey: extractionKeys.events(caseRef ?? 'none', query),
+    queryFn: () => ExtractionService.listEvents(caseRef as string, query),
+    enabled: caseRef !== null,
+    placeholderData: keepPreviousData,
+  })
+
+export const useExtracted = (caseRef: string, evidenceRef: string, enabled = true) =>
+  useQuery({
+    queryKey: extractionKeys.extracted(caseRef, evidenceRef),
+    queryFn: () => ExtractionService.extracted(caseRef, evidenceRef),
+    enabled,
+  })
+
+/** Any change to extracted information refreshes entity/event lists and case counts. */
+const refreshExtraction = (caseRef: string) =>
+  Promise.all([
+    queryClient.invalidateQueries({ queryKey: extractionKeys.all(caseRef) }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.investigations }),
+  ])
+
+export const useReview = (caseRef: string) =>
+  useMutation({
+    // The screens re-read the data afterwards, so the response itself is not needed.
+    mutationFn: async (input: {
+      kind: 'entity' | 'event'
+      reference: string
+      status: ReviewStatus
+      note?: string
+    }): Promise<void> => {
+      if (input.kind === 'entity') {
+        await ExtractionService.reviewEntity(caseRef, input.reference, input.status, input.note)
+      } else {
+        await ExtractionService.reviewEvent(caseRef, input.reference, input.status, input.note)
+      }
+    },
+    onSuccess: () => refreshExtraction(caseRef),
+  })
+
+export const useAddAnnotation = (caseRef: string) =>
+  useMutation({
+    mutationFn: (input: NewAnnotation) => ExtractionService.addEvent(caseRef, input),
+    onSuccess: () => refreshExtraction(caseRef),
+  })
+
+export const useAddEntity = (caseRef: string) =>
+  useMutation({
+    mutationFn: (input: { entityType: EntityType; value: string; evidenceReference: string; note: string }) =>
+      ExtractionService.addEntity(caseRef, input),
+    onSuccess: () => refreshExtraction(caseRef),
   })

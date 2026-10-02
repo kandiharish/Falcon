@@ -4,7 +4,17 @@
  */
 import {
   Archive,
+  Building2,
+  Camera,
   Car,
+  CreditCard,
+  DoorOpen,
+  FileCode2,
+  MapPin,
+  MessageSquare,
+  MessagesSquare,
+  Phone,
+  UserRound,
   FileArchive,
   FileText,
   Image as ImageIcon,
@@ -35,6 +45,8 @@ import {
 import type {
   AssertionKind,
   ConfidenceLevel,
+  EntityType,
+  EventType,
   EvidenceType,
   EvidenceStatus,
   InvestigationStatus,
@@ -247,4 +259,53 @@ export function guessEvidenceType(filename: string): EvidenceType | null {
   if (['pdf', 'docx', 'txt'].includes(ext)) return 'document'
   if (ext === 'gpx') return 'gps'
   return null
+}
+
+export const entityTypeTerms: Record<EntityType, { label: string; plural: string; icon: LucideIcon }> = {
+  person: { label: 'Person', plural: 'People', icon: UserRound },
+  phone_number: { label: 'Phone number', plural: 'Phone numbers', icon: Phone },
+  device: { label: 'Device', plural: 'Devices', icon: Smartphone },
+  vehicle: { label: 'Vehicle', plural: 'Vehicles', icon: Car },
+  account: { label: 'Account', plural: 'Accounts', icon: CreditCard },
+  location: { label: 'Location', plural: 'Locations', icon: MapPin },
+  organization: { label: 'Organisation', plural: 'Organisations', icon: Building2 },
+  digital_artifact: { label: 'Digital artefact', plural: 'Digital artefacts', icon: FileCode2 },
+}
+
+export const eventTypeTerms: Record<EventType, { label: string; icon: LucideIcon }> = {
+  call_made: { label: 'Call made', icon: PhoneCall },
+  message_sent: { label: 'Message sent', icon: MessageSquare },
+  transaction_completed: { label: 'Transaction', icon: Landmark },
+  location_recorded: { label: 'Location recorded', icon: MapPinned },
+  vehicle_detected: { label: 'Vehicle detected', icon: Car },
+  person_detected: { label: 'Person detected', icon: UserRound },
+  device_detected: { label: 'Device detected', icon: Smartphone },
+  person_entered_location: { label: 'Person entered location', icon: DoorOpen },
+  photo_taken: { label: 'Photo taken', icon: Camera },
+  video_recorded: { label: 'Video recorded', icon: Video },
+  document_created: { label: 'Document dated', icon: FileText },
+  communication: { label: 'Communication', icon: MessagesSquare },
+  digital_artifact_created: { label: 'Digital artefact created', icon: FileCode2 },
+  other: { label: 'Other event', icon: CircleDot },
+}
+
+/** Event types an analyst can record by hand while reviewing evidence. */
+export const annotationEventTypes: EventType[] = [
+  'person_detected',
+  'vehicle_detected',
+  'device_detected',
+  'person_entered_location',
+  'communication',
+  'other',
+]
+
+export const participantRoleLabels: Record<string, string> = {
+  caller: 'caller',
+  callee: 'called',
+  device: 'device',
+  vehicle: 'vehicle',
+  payer: 'paid',
+  payee: 'received',
+  subject: 'subject',
+  involved: 'involved',
 }

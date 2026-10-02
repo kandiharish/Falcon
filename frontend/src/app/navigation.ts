@@ -241,5 +241,6 @@ export function findNavItem(pathname: string): NavItem | undefined {
   if (pathname === '/') return allNavItems[0]
   // An evidence item lives under its case (/investigations/CASE-…/evidence/IMG-001) but belongs to Evidence.
   if (/\/evidence(\/|$)/.test(pathname)) return allNavItems.find((item) => item.id === 'evidence')
+  if (/\/entities(\/|$)/.test(pathname)) return allNavItems.find((item) => item.id === 'entities')
   return allNavItems.find((item) => item.path !== '/' && pathname.startsWith(item.path))
 }

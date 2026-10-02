@@ -186,3 +186,92 @@ export interface Evidence {
   createdAt: string
   latestJob: ProcessingJob | null
 }
+
+export type EntityType =
+  | 'person'
+  | 'phone_number'
+  | 'device'
+  | 'vehicle'
+  | 'account'
+  | 'location'
+  | 'organization'
+  | 'digital_artifact'
+
+export type EventType =
+  | 'call_made'
+  | 'message_sent'
+  | 'transaction_completed'
+  | 'location_recorded'
+  | 'vehicle_detected'
+  | 'person_detected'
+  | 'device_detected'
+  | 'person_entered_location'
+  | 'photo_taken'
+  | 'video_recorded'
+  | 'document_created'
+  | 'communication'
+  | 'digital_artifact_created'
+  | 'other'
+
+export interface EntityRef {
+  reference: string // P001, PH001, V001 …
+  entityType: EntityType
+  label: string
+}
+
+export interface EntitySummary extends EntityRef {
+  reviewStatus: ReviewStatus
+  mentionCount: number
+  evidenceCount: number
+  eventCount: number
+  maxConfidence: number | null
+  assertionKinds: AssertionKind[]
+  attributes: Record<string, unknown>
+  addedManually: boolean
+}
+
+/** Where an entity appears in one evidence item, and how we know. */
+export interface Mention {
+  evidenceReference: string
+  evidenceType: string
+  evidenceDescription: string
+  assertionKind: AssertionKind
+  confidence: number
+  extractor: string
+  sourceLocation: string
+  context: string
+  createdAt: string
+}
+
+/** Named InvestigationEvent so it never clashes with the browser's built-in `Event`. */
+export interface InvestigationEvent {
+  reference: string // E001 …
+  eventType: EventType
+  occurredAt: string | null
+  endedAt: string | null
+  latitude: number | null
+  longitude: number | null
+  locationText: string
+  description: string
+  evidenceReference: string
+  evidenceType: string
+  assertionKind: AssertionKind
+  confidence: number
+  extractor: string
+  sourceLocation: string
+  reviewStatus: ReviewStatus
+  attributes: Record<string, unknown>
+  participants: (EntityRef & { role: string })[]
+  addedManually: boolean
+}
+
+export interface EntityDetail extends EntitySummary {
+  mentions: Mention[]
+  events: InvestigationEvent[]
+}
+
+export interface ExtractedInformation {
+  evidenceReference: string
+  mentions: { entity: EntityRef; assertionKind: AssertionKind; confidence: number; extractor: string; sourceLocation: string; context: string }[]
+  events: InvestigationEvent[]
+}

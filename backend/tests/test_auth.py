@@ -6,7 +6,7 @@ from sqlalchemy.exc import DBAPIError
 
 from app.db.session import SessionLocal
 from app.models import AuditLog
-from tests.conftest import TEST_PASSWORD
+from tests.helpers import TEST_PASSWORD
 
 
 def login(client, email, password=TEST_PASSWORD, remember=False):

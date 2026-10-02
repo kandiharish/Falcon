@@ -29,6 +29,10 @@ class StepContext:
     db: Session
     evidence: Evidence
     warnings: list[str] = field(default_factory=list)
+    # Filled by the document-text step and read by the extraction step.
+    text: str | None = None
+    text_method: str = ""
+    text_confidence: float = 1.0
 
 
 @dataclass(frozen=True)
