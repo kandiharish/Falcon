@@ -11,6 +11,7 @@ import {
   useQuery,
 } from '@tanstack/react-query'
 import { AdminService } from './adminService'
+import { CorrelationService, type CorrelationQuery } from './correlationService'
 import { ApiError } from './apiClient'
 import { AuthService, type LoginInput } from './authService'
 import { EvidenceService, isProcessing, type EvidenceQuery, type NewEvidence } from './evidenceService'
@@ -258,4 +259,39 @@ export const useAddEntity = (caseRef: string) =>
     mutationFn: (input: { entityType: EntityType; value: string; evidenceReference: string; note: string }) =>
       ExtractionService.addEntity(caseRef, input),
     onSuccess: () => refreshExtraction(caseRef),
+  })
+
+// ---------- Correlations -----------------------------------------------------------------
+
+export const correlationKeys = {
+  all: (caseRef: string) => ['correlations', caseRef] as const,
+  list: (caseRef: string, query: CorrelationQuery) => ['correlations', caseRef, 'list', query] as const,
+  item: (caseRef: string, ref: string) => ['correlations', caseRef, 'item', ref] as const,
+}
+
+export const useCorrelations = (caseRef: string | null, query: CorrelationQuery = {}) =>
+  useQuery({
+    queryKey: correlationKeys.list(caseRef ?? 'none', query),
+    queryFn: () => CorrelationService.list(caseRef as string, query),
+    enabled: caseRef !== null,
+    placeholderData: keepPreviousData,
+  })
+
+export const useCorrelation = (caseRef: string, ref: string) =>
+  useQuery({ queryKey: correlationKeys.item(caseRef, ref), queryFn: () => CorrelationService.get(caseRef, ref) })
+
+const refreshCorrelations = (caseRef: string) =>
+  Promise.all([
+    queryClient.invalidateQueries({ queryKey: correlationKeys.all(caseRef) }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.investigations }),
+  ])
+
+export const useRunCorrelation = (caseRef: string) =>
+  useMutation({ mutationFn: () => CorrelationService.run(caseRef), onSuccess: () => refreshCorrelations(caseRef) })
+
+export const useReviewCorrelation = (caseRef: string, ref: string) =>
+  useMutation({
+    mutationFn: ({ status, note }: { status: ReviewStatus; note?: string }) =>
+      CorrelationService.review(caseRef, ref, status, note),
+    onSuccess: () => refreshCorrelations(caseRef),
   })

@@ -276,3 +276,37 @@ export interface ExtractedInformation {
   mentions: { entity: EntityRef; assertionKind: AssertionKind; confidence: number; extractor: string; sourceLocation: string; context: string }[]
   events: InvestigationEvent[]
 }
+
+export type CorrelationLevel = 'high' | 'medium' | 'low'
+export type FactorKind = 'entity' | 'time' | 'location'
+
+export interface CorrelationFactor {
+  kind: FactorKind
+  score: number // 0–1
+  weight: number
+  contribution: number // score × weight
+  explanation: string
+  details: Record<string, unknown>
+}
+
+/** A potential relationship between two evidence items — never a conclusion. */
+export interface Correlation {
+  reference: string // COR-004
+  evidenceA: { reference: string; evidenceType: string; description: string }
+  evidenceB: { reference: string; evidenceType: string; description: string }
+  score: number
+  level: CorrelationLevel
+  factors: CorrelationFactor[]
+  algorithm: string
+  stale: boolean
+  reviewStatus: ReviewStatus
+  reviewNote: string | null
+  reviewedBy: string | null
+  reviewedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CorrelationDetail extends Correlation {
+  supportingEvents: InvestigationEvent[]
+}

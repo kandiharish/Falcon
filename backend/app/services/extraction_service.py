@@ -29,7 +29,7 @@ from app.models import (
 )
 from app.repositories import reference_counters
 from app.security.permissions import Permission, Role, permissions_for
-from app.services import audit_service, evidence_service, investigation_service
+from app.services import audit_service, correlation_service, evidence_service, investigation_service
 from app.services.errors import ConflictError, ForbiddenError, InvalidInputError, NotFoundError
 from app.services.request_context import RequestContext
 
@@ -221,6 +221,7 @@ def create_entity(
         context=context,
     )
     db.commit()
+    correlation_service.refresh_quietly(db, case.id)  # keep correlations current
     return entity
 
 
@@ -249,6 +250,7 @@ def review_entity(
         context=context,
     )
     db.commit()
+    correlation_service.refresh_quietly(db, case.id)  # keep correlations current
     return entity
 
 
@@ -391,6 +393,7 @@ def create_event(
         context=context,
     )
     db.commit()
+    correlation_service.refresh_quietly(db, case.id)  # keep correlations current
     return get_event(db, user, case_reference, event.reference)
 
 
@@ -419,6 +422,7 @@ def review_event(
         context=context,
     )
     db.commit()
+    correlation_service.refresh_quietly(db, case.id)  # keep correlations current
     return get_event(db, user, case_reference, reference)
 
 

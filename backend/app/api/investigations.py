@@ -14,7 +14,7 @@ from app.models import Investigation, User
 from app.repositories.investigation_repository import InvestigationFilters
 from app.security.dependencies import require_permission
 from app.security.permissions import Permission
-from app.services import evidence_service, extraction_service
+from app.services import correlation_service, evidence_service, extraction_service
 from app.services import investigation_service as service
 from app.services.request_context import request_context
 
@@ -146,7 +146,15 @@ def _out(
 def _counts(db: Session, ids: list[uuid.UUID]) -> dict[uuid.UUID, dict[str, int]]:
     evidence = evidence_service.counts_by_investigation(db, ids)
     extracted = extraction_service.counts_by_investigation(db, ids)
-    return {i: {"evidence": evidence.get(i, 0), **extracted.get(i, {})} for i in ids}
+    correlations = correlation_service.counts_by_investigation(db, ids)
+    return {
+        i: {
+            "evidence": evidence.get(i, 0),
+            **extracted.get(i, {}),
+            "correlations": correlations.get(i, 0),
+        }
+        for i in ids
+    }
 
 
 def _with_counts(db: Session, investigation: Investigation, user: User) -> InvestigationOut:

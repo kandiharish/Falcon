@@ -11,6 +11,7 @@ export function useCaseAccess(caseRef: string | null) {
   return {
     canReview: can(user, 'evidence:verify') && onTeam,
     canContribute: can(user, 'evidence:upload') && onTeam && open,
+    canCorrelate: can(user, 'correlation:review') && onTeam,
   }
 }
 

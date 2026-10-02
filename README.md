@@ -22,7 +22,8 @@ phase-by-phase learning notes are in [docs/learning/](docs/learning/).
 | P5 Evidence upload, integrity (SHA-256), background processing | ✅ |
 | P6 Extraction: entities, events, OCR, provenance, analyst observations | ✅ |
 | P7 Timeline, map, investigation time zones | ✅ |
-| P8 Correlation engine | next |
+| P8 Correlation engine: explainable scores, analyst review | ✅ |
+| P9 Relationship graph | next |
 
 ## Prerequisites
 

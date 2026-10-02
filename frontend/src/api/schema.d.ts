@@ -458,6 +458,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/investigations/{case_reference}/correlations/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Run */
+        post: operations["run_api_investigations__case_reference__correlations_run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/correlations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Correlations */
+        get: operations["list_correlations_api_investigations__case_reference__correlations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/correlations/{reference}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Correlation */
+        get: operations["get_correlation_api_investigations__case_reference__correlations__reference__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/correlations/{reference}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Review */
+        post: operations["review_api_investigations__case_reference__correlations__reference__review_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -545,6 +613,97 @@ export interface components {
              * @default
              */
             tags: string;
+        };
+        /** CorrelationDetail */
+        CorrelationDetail: {
+            /** Reference */
+            reference: string;
+            evidence_a: components["schemas"]["EvidenceRef"];
+            evidence_b: components["schemas"]["EvidenceRef"];
+            /** Score */
+            score: number;
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "high" | "medium" | "low";
+            /** Factors */
+            factors: components["schemas"]["FactorOut"][];
+            /** Algorithm */
+            algorithm: string;
+            /** Stale */
+            stale: boolean;
+            /**
+             * Review Status
+             * @enum {string}
+             */
+            review_status: "pending" | "confirmed" | "rejected";
+            /** Review Note */
+            review_note: string | null;
+            /** Reviewed By */
+            reviewed_by: string | null;
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Supporting Events */
+            supporting_events: components["schemas"]["EventOut"][];
+        };
+        /** CorrelationOut */
+        CorrelationOut: {
+            /** Reference */
+            reference: string;
+            evidence_a: components["schemas"]["EvidenceRef"];
+            evidence_b: components["schemas"]["EvidenceRef"];
+            /** Score */
+            score: number;
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "high" | "medium" | "low";
+            /** Factors */
+            factors: components["schemas"]["FactorOut"][];
+            /** Algorithm */
+            algorithm: string;
+            /** Stale */
+            stale: boolean;
+            /**
+             * Review Status
+             * @enum {string}
+             */
+            review_status: "pending" | "confirmed" | "rejected";
+            /** Review Note */
+            review_note: string | null;
+            /** Reviewed By */
+            reviewed_by: string | null;
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** CorrelationPage */
+        CorrelationPage: {
+            /** Items */
+            items: components["schemas"]["CorrelationOut"][];
+            /** Total */
+            total: number;
         };
         /** CurrentUserResponse */
         CurrentUserResponse: {
@@ -856,6 +1015,15 @@ export interface components {
             /** Offset */
             offset: number;
         };
+        /** EvidenceRef */
+        EvidenceRef: {
+            /** Reference */
+            reference: string;
+            /** Evidence Type */
+            evidence_type: string;
+            /** Description */
+            description: string;
+        };
         /** ExtractedInformation */
         ExtractedInformation: {
             /** Evidence Reference */
@@ -864,6 +1032,26 @@ export interface components {
             mentions: components["schemas"]["EntityMentionOut"][];
             /** Events */
             events: components["schemas"]["EventOut"][];
+        };
+        /** FactorOut */
+        FactorOut: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "entity" | "time" | "location";
+            /** Score */
+            score: number;
+            /** Weight */
+            weight: number;
+            /** Contribution */
+            contribution: number;
+            /** Explanation */
+            explanation: string;
+            /** Details */
+            details: {
+                [key: string]: unknown;
+            };
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1174,6 +1362,19 @@ export interface components {
             review_status: "pending" | "confirmed" | "rejected";
             /** Note */
             note?: string | null;
+        };
+        /** RunResult */
+        RunResult: {
+            /** Created */
+            created: number;
+            /** Updated */
+            updated: number;
+            /** Removed */
+            removed: number;
+            /** Stale */
+            stale: number;
+            /** Total */
+            total: number;
         };
         /** StatusChange */
         StatusChange: {
@@ -2235,6 +2436,143 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ExtractedInformation"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_api_investigations__case_reference__correlations_run_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_correlations_api_investigations__case_reference__correlations_get: {
+        parameters: {
+            query?: {
+                level?: ("high" | "medium" | "low") | null;
+                review_status?: ("pending" | "confirmed" | "rejected") | null;
+                evidence?: string | null;
+                include_stale?: boolean;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                case_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorrelationPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_correlation_api_investigations__case_reference__correlations__reference__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorrelationDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    review_api_investigations__case_reference__correlations__reference__review_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Review"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorrelationDetail"];
                 };
             };
             /** @description Validation Error */

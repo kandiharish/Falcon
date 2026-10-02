@@ -26,7 +26,7 @@ from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.models import Evidence, ProcessingJob
 from app.processing.pipeline import StepContext, StepFailed, steps_for
-from app.services import audit_service
+from app.services import audit_service, correlation_service
 from app.services.evidence_service import audit_object_id
 
 log = logging.getLogger("falcon.worker")
@@ -142,6 +142,8 @@ def _finish(
         note=job.error_message,
     )
     db.commit()
+    if ok:  # new facts may connect this evidence to others
+        correlation_service.refresh_quietly(db, evidence.investigation_id)
 
 
 def requeue_stale_jobs(db: Session) -> int:

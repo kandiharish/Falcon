@@ -3,7 +3,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.api import admin, auth, evidence, extraction, health, investigations
+from app.api import admin, auth, correlations, evidence, extraction, health, investigations
 from app.core.config import get_settings
 from app.security.csrf import CSRFHeaderMiddleware
 from app.services.errors import DomainError
@@ -33,6 +33,7 @@ def create_app() -> FastAPI:
     app.include_router(investigations.router, prefix="/api")
     app.include_router(evidence.router, prefix="/api")
     app.include_router(extraction.router, prefix="/api")
+    app.include_router(correlations.router, prefix="/api")
     return app
 
 

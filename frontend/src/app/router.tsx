@@ -45,6 +45,10 @@ const builtPages: Record<string, RouteObject['lazy']> = {
     const { TimelinePage } = await import('@/features/timeline/TimelinePage')
     return { Component: () => guard(navItem('timeline'), <TimelinePage />) }
   },
+  correlations: async () => {
+    const { CorrelationsPage } = await import('@/features/correlations/CorrelationsPage')
+    return { Component: () => guard(navItem('correlations'), <CorrelationsPage />) }
+  },
   admin: async () => {
     const { UsersPage } = await import('@/features/admin/UsersPage')
     return { Component: () => guard(navItem('admin'), <UsersPage />) }
@@ -107,6 +111,13 @@ export const router = createBrowserRouter([
             lazy: async () => {
               const { EntityDetailPage } = await import('@/features/extraction/EntityDetailPage')
               return { Component: () => guard(navItem('entities'), <EntityDetailPage />) }
+            },
+          },
+          {
+            path: 'investigations/:reference/correlations/:correlationRef',
+            lazy: async () => {
+              const { CorrelationDetailPage } = await import('@/features/correlations/CorrelationDetailPage')
+              return { Component: () => guard(navItem('correlations'), <CorrelationDetailPage />) }
             },
           },
           {

@@ -36,7 +36,7 @@ export function EvidenceChip({ reference, caseRef }: { reference: string; caseRe
   return (
     <Link
       to={`/investigations/${caseRef}/evidence/${reference}`}
-      className="inline-flex items-center rounded border bg-muted/60 px-1.5 font-mono text-[0.72rem] font-medium outline-none hover:border-primary/50 focus-visible:ring-2 focus-visible:ring-ring"
+      className="inline-flex shrink-0 items-center rounded border bg-muted/60 px-1.5 font-mono whitespace-nowrap text-[0.72rem] font-medium outline-none hover:border-primary/50 focus-visible:ring-2 focus-visible:ring-ring"
       title="Open the supporting evidence"
     >
       {reference}

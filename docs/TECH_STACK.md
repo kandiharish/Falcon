@@ -104,7 +104,7 @@ AI **suggests**, humans **decide**. Every AI output is labelled (Extracted / Det
 | Text similarity / duplicate documents | **sentence-transformers `all-MiniLM-L6-v2`** | Embedding model (384-dim vectors) | ~90 MB | 🔜 P10 | Small, CPU-friendly; vectors stored in pgvector. |
 | Near-duplicate images | **imagehash** (perceptual hash) | Algorithm (no ML) | — | 🔜 P10 | Detects resized/re-encoded copies. |
 | Natural-language search, summaries, Investigation Assistant agent | **Qwen3 8B** (`qwen3:8b`) via **Ollama** | Large language model with tool calling | ~5 GB (4-bit) | 🔜 P10 | Runs on 16 GB RAM; good tool calling. Fallback: `qwen3:4b` (~2.5 GB) on weaker machines. |
-| Correlation scoring | **FALCON correlation engine** (our own Python rules) | Deterministic scoring, no ML | — | 🔜 P8 | Same input → same output; every score explained factor by factor. |
+| Correlation scoring | **FALCON correlation engine** (our own Python rules) | Deterministic scoring, no ML | — | ✅ P8 | Same input → same output; every score explained factor by factor. Entity 0.45 · time 0.30 (30 min) · place 0.25 (500 m, haversine). |
 
 **Deliberately not used:** face recognition (ethically risky, biased, plan §52) and any cloud AI
 that would send evidence to a third party. The `AIProvider` interface allows swapping in a stronger
