@@ -151,3 +151,58 @@ export const roleLabels: Record<Role, string> = {
   supervisor: 'Supervisor',
   system_admin: 'System Administrator',
 }
+
+/**
+ * Which status may follow which. Mirrors ALLOWED_TRANSITIONS in
+ * backend/app/services/investigation_service.py — the server is the authority;
+ * this copy only decides which buttons to offer.
+ */
+export const allowedTransitions: Record<InvestigationStatus, InvestigationStatus[]> = {
+  draft: ['active', 'archived'],
+  active: ['under_review', 'suspended', 'closed'],
+  under_review: ['active', 'closed'],
+  suspended: ['active', 'closed'],
+  closed: ['active', 'archived'],
+  archived: [],
+}
+
+/** Verb for moving *to* a status, e.g. "Activate", "Close investigation". */
+export const transitionLabels: Record<InvestigationStatus, string> = {
+  draft: 'Return to draft',
+  active: 'Set active',
+  under_review: 'Send for review',
+  suspended: 'Suspend',
+  closed: 'Close investigation',
+  archived: 'Archive',
+}
+
+export const CASE_TYPES = [
+  'Burglary',
+  'Theft',
+  'Vehicle theft',
+  'Assault',
+  'Financial fraud',
+  'Cyber incident',
+  'Missing person',
+  'Narcotics',
+  'Other',
+] as const
+
+export const auditActionLabels: Record<string, string> = {
+  'investigation.created': 'Created the investigation',
+  'investigation.updated': 'Updated the investigation',
+  'investigation.member_added': 'Added a team member',
+}
+
+export const fieldLabels: Record<string, string> = {
+  title: 'Title',
+  description: 'Description',
+  case_type: 'Case type',
+  priority: 'Priority',
+  status: 'Status',
+  stage: 'Workflow stage',
+  location: 'Location',
+  tags: 'Tags',
+  member: 'Member',
+  role_in_case: 'Role in case',
+}

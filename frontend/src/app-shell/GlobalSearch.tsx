@@ -27,7 +27,8 @@ export function GlobalSearch() {
   const navigate = useNavigate()
   const { data: user } = useCurrentUser()
   const canSeeInvestigations = can(user, 'investigation:read')
-  const { data: investigations } = useInvestigations(canSeeInvestigations)
+  const { data: page } = useInvestigations({ limit: 50 }, canSeeInvestigations)
+  const investigations = page?.items
   const setCurrentInvestigation = useInvestigationContext((s) => s.setCurrentInvestigation)
 
   useEffect(() => {
@@ -77,15 +78,15 @@ export function GlobalSearch() {
                 <CommandGroup heading="Investigations">
                   {investigations?.map((investigation) => (
                     <CommandItem
-                      key={investigation.id}
-                      value={`${investigation.id} ${investigation.title}`}
+                      key={investigation.reference}
+                      value={`${investigation.reference} ${investigation.title}`}
                       onSelect={() => {
-                        setCurrentInvestigation(investigation.id)
-                        go('/')
+                        setCurrentInvestigation(investigation.reference)
+                        go(`/investigations/${investigation.reference}`)
                       }}
                     >
                       <FolderSearch />
-                      <span className="font-mono text-xs">{investigation.id}</span>
+                      <span className="font-mono text-xs">{investigation.reference}</span>
                       <span className="truncate">{investigation.title}</span>
                     </CommandItem>
                   ))}

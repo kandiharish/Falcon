@@ -15,6 +15,7 @@ import { GlobalSearch } from './GlobalSearch'
 import { InvestigationContextBar } from './InvestigationContextBar'
 import { InvestigationSwitcher } from './InvestigationSwitcher'
 import { HelpMenu, NotificationsMenu, UserMenu } from './TopBarMenus'
+import { useValidCurrentInvestigation } from './useValidCurrentInvestigation'
 
 /**
  * The frame around every page:
@@ -26,6 +27,7 @@ export function AppShell() {
   const { pathname } = useLocation()
   const current = findNavItem(pathname)
   const pageLabel = pathname === '/design-system' ? 'Design system' : (current?.label ?? 'Not found')
+  useValidCurrentInvestigation()
 
   return (
     <SidebarProvider>

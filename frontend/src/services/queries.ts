@@ -2,11 +2,23 @@
  * TanStack Query hooks: the only way screens read server data.
  * Query keys are defined once here so caching and refetching stay consistent.
  */
-import { MutationCache, QueryCache, QueryClient, useMutation, useQuery } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  MutationCache,
+  QueryCache,
+  QueryClient,
+  useMutation,
+  useQuery,
+} from '@tanstack/react-query'
 import { AdminService } from './adminService'
 import { ApiError } from './apiClient'
 import { AuthService, type LoginInput } from './authService'
-import { InvestigationService } from './investigationService'
+import {
+  InvestigationService,
+  type InvestigationChanges,
+  type InvestigationQuery,
+  type NewInvestigation,
+} from './investigationService'
 import { SystemService } from './systemService'
 
 export const queryKeys = {
@@ -14,7 +26,11 @@ export const queryKeys = {
   currentUser: ['auth', 'me'] as const,
   users: ['admin', 'users'] as const,
   investigations: ['investigations'] as const,
-  investigation: (id: string) => ['investigations', id] as const,
+  investigationList: (query: InvestigationQuery) => ['investigations', 'list', query] as const,
+  investigation: (ref: string) => ['investigations', 'detail', ref] as const,
+  members: (ref: string) => ['investigations', 'detail', ref, 'members'] as const,
+  activity: (ref: string) => ['investigations', 'detail', ref, 'activity'] as const,
+  assignableUsers: ['investigations', 'assignable-users'] as const,
 }
 
 /** Any 401 means the session ended (expired, revoked, signed out elsewhere) → back to login. */
@@ -62,12 +78,52 @@ export const useLogout = () =>
 
 export const useUsers = () => useQuery({ queryKey: queryKeys.users, queryFn: AdminService.listUsers })
 
-export const useInvestigations = (enabled = true) =>
-  useQuery({ queryKey: queryKeys.investigations, queryFn: InvestigationService.list, enabled })
-
-export const useInvestigation = (id: string | null) =>
+export const useInvestigations = (query: InvestigationQuery = {}, enabled = true) =>
   useQuery({
-    queryKey: queryKeys.investigation(id ?? 'none'),
-    queryFn: () => InvestigationService.get(id as string),
-    enabled: id !== null,
+    queryKey: queryKeys.investigationList(query),
+    queryFn: () => InvestigationService.list(query),
+    enabled,
+    placeholderData: keepPreviousData, // keep showing the old page while the next one loads
+  })
+
+export const useInvestigation = (reference: string | null) =>
+  useQuery({
+    queryKey: queryKeys.investigation(reference ?? 'none'),
+    queryFn: () => InvestigationService.get(reference as string),
+    enabled: reference !== null,
+  })
+
+export const useInvestigationMembers = (reference: string) =>
+  useQuery({ queryKey: queryKeys.members(reference), queryFn: () => InvestigationService.members(reference) })
+
+export const useInvestigationActivity = (reference: string) =>
+  useQuery({
+    queryKey: queryKeys.activity(reference),
+    queryFn: () => InvestigationService.activity(reference),
+    staleTime: 0,
+  })
+
+export const useAssignableUsers = (enabled: boolean) =>
+  useQuery({ queryKey: queryKeys.assignableUsers, queryFn: InvestigationService.assignableUsers, enabled })
+
+/** After any change, every cached investigation answer is marked stale and refetched. */
+const refreshInvestigations = () =>
+  queryClient.invalidateQueries({ queryKey: queryKeys.investigations })
+
+export const useCreateInvestigation = () =>
+  useMutation({
+    mutationFn: (input: NewInvestigation) => InvestigationService.create(input),
+    onSuccess: refreshInvestigations,
+  })
+
+export const useUpdateInvestigation = (reference: string) =>
+  useMutation({
+    mutationFn: (changes: InvestigationChanges) => InvestigationService.update(reference, changes),
+    onSuccess: refreshInvestigations,
+  })
+
+export const useAddMember = (reference: string) =>
+  useMutation({
+    mutationFn: (email: string) => InvestigationService.addMember(reference, email),
+    onSuccess: refreshInvestigations,
   })

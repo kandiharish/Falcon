@@ -42,7 +42,7 @@ Legend: ✅ in use now · 🔜 planned (phase)
 | oxlint | 1.x | ✅ P1 | Linter | Very fast Rust-based linter shipped with the Vite template. |
 | TanStack Table + Virtual | — | 🔜 P4–P5 | Large data tables | Renders only visible rows (thousands of evidence items). |
 | React Hook Form + Zod | 7 / 4 | ✅ P3 | Forms + validation | One schema = type + runtime validation. |
-| openapi-typescript | — | 🔜 P4 | Generate TS types from the API | Frontend and backend types can never drift apart. |
+| openapi-typescript | 7.13 (via npx) | ✅ P4 | Generate TS types from the API (`npm run api:types`) | Frontend and backend types can never drift apart. Run through npx because it officially supports TypeScript 5 only. |
 | Recharts | — | 🔜 P11 | Dashboard charts | Simple, good for aggregate statistics. |
 | vis-timeline | — | 🔜 P7 | Zoomable timeline | Built-in zoom, grouping, ranges. |
 | Leaflet + OpenStreetMap | — | 🔜 P7 | Maps | Free, no API key. Google Maps requires billing. |

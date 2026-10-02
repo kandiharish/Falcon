@@ -46,16 +46,41 @@ export type WorkflowStage =
   | 'reporting'
   | 'closed'
 
-export interface InvestigationSummary {
-  id: string
+export interface Investigation {
+  reference: string // e.g. CASE-2026-001
   title: string
+  description: string
   caseType: string
   status: InvestigationStatus
   priority: Priority
-  leadInvestigator: string
-  location: string
   stage: WorkflowStage
-  updatedAt: string // ISO 8601
+  location: string
+  tags: string[]
+  leadInvestigator: { id: string; displayName: string }
+  teamSize: number
+  myRoleInCase: 'lead' | 'member' | null
+  counts: { evidence: number; entities: number; events: number; correlations: number }
+  createdAt: string // ISO 8601
+  updatedAt: string
+}
+
+export interface InvestigationMember {
+  userId: string
+  displayName: string
+  email: string
+  role: Role
+  roleInCase: 'lead' | 'member'
+  addedAt: string
+}
+
+export interface AuditEntry {
+  id: number
+  occurredAt: string
+  actorEmail: string | null
+  action: string
+  previousState: Record<string, unknown> | null
+  newState: Record<string, unknown> | null
+  note: string | null
 }
 
 export type Role =

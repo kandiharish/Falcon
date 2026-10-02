@@ -6,7 +6,7 @@ from typing import Any
 
 from pydantic import BaseModel, EmailStr, Field
 
-from app.models import User
+from app.models import AuditLog, User
 from app.security.permissions import permissions_for
 
 
@@ -61,3 +61,18 @@ class AuditEntry(BaseModel):
     new_state: dict[str, Any] | None
     note: str | None
     ip_address: str | None
+
+
+def audit_entry(row: AuditLog) -> AuditEntry:
+    return AuditEntry(
+        id=row.id,
+        occurred_at=row.occurred_at,
+        actor_email=row.actor_email,
+        action=row.action,
+        object_type=row.object_type,
+        object_id=row.object_id,
+        previous_state=row.previous_state,
+        new_state=row.new_state,
+        note=row.note,
+        ip_address=str(row.ip_address) if row.ip_address else None,
+    )

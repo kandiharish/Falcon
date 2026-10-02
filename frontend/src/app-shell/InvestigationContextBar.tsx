@@ -25,7 +25,7 @@ export function InvestigationContextBar() {
       ) : (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <div className="flex min-w-0 items-center gap-2">
-            <IdTag>{investigation.id}</IdTag>
+            <IdTag>{investigation.reference}</IdTag>
             <span className="truncate text-sm font-medium">{investigation.title}</span>
             <StatusBadge kind="investigation" status={investigation.status} />
             <PriorityBadge priority={investigation.priority} />
@@ -33,7 +33,7 @@ export function InvestigationContextBar() {
           <div className="hidden items-center gap-3 text-xs text-muted-foreground md:flex">
             <span className="flex items-center gap-1">
               <UserRound aria-hidden className="size-3.5" />
-              {investigation.leadInvestigator}
+              {investigation.leadInvestigator.displayName}
             </span>
             <span className="flex items-center gap-1">
               <MapPin aria-hidden className="size-3.5" />

@@ -11,6 +11,7 @@ import { allNavItems, type NavItem } from './navigation'
  *  / (RequireAuth)              must be signed in
  *    └─ AppShell                sidebar + top bar
  *         ├─ index              overview
+ *         ├─ investigations     investigation:read (list + /investigations/:reference)
  *         ├─ admin              users:read
  *         └─ other modules      their own permission ("planned" pages until built)
  *
@@ -20,11 +21,16 @@ import { allNavItems, type NavItem } from './navigation'
 const guard = (item: NavItem, page: ReactNode) =>
   item.permission ? <RequirePermission permission={item.permission}>{page}</RequirePermission> : page
 
+const navItem = (id: string) => allNavItems.find((i) => i.id === id)!
+
 const builtPages: Record<string, RouteObject['lazy']> = {
+  investigations: async () => {
+    const { InvestigationsPage } = await import('@/features/investigations/InvestigationsPage')
+    return { Component: () => guard(navItem('investigations'), <InvestigationsPage />) }
+  },
   admin: async () => {
     const { UsersPage } = await import('@/features/admin/UsersPage')
-    const item = allNavItems.find((i) => i.id === 'admin')!
-    return { Component: () => guard(item, <UsersPage />) }
+    return { Component: () => guard(navItem('admin'), <UsersPage />) }
   },
 }
 
@@ -63,6 +69,15 @@ export const router = createBrowserRouter([
             }),
           },
           ...moduleRoutes,
+          {
+            path: 'investigations/:reference',
+            lazy: async () => {
+              const { InvestigationDetailPage } = await import(
+                '@/features/investigations/InvestigationDetailPage'
+              )
+              return { Component: () => guard(navItem('investigations'), <InvestigationDetailPage />) }
+            },
+          },
           {
             path: 'design-system',
             lazy: async () => ({

@@ -51,8 +51,8 @@ export function OverviewPage() {
       <div className="flex items-start gap-2 rounded-lg border border-info/25 bg-info/5 px-3 py-2 text-sm">
         <Info aria-hidden className="mt-0.5 size-4 shrink-0 text-info" />
         <p className="text-muted-foreground">
-          Evidence, entity, event and correlation metrics appear here once evidence management is
-          built (Phase 4–5). All case data shown is fictional demonstration data.
+          Evidence, entity, event and correlation metrics appear here as those modules are built
+          (Phase 5 onward). All case data shown is fictional demonstration data.
         </p>
       </div>
 
@@ -132,7 +132,7 @@ function CurrentInvestigationCard({ id, className }: { id: string | null; classN
         ) : (
           <div className="space-y-5">
             <div className="flex flex-wrap items-center gap-2">
-              <IdTag>{investigation.id}</IdTag>
+              <IdTag>{investigation.reference}</IdTag>
               <h2 className="text-lg font-semibold">{investigation.title}</h2>
             </div>
             <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-4">
@@ -143,7 +143,7 @@ function CurrentInvestigationCard({ id, className }: { id: string | null; classN
                 <PriorityBadge priority={investigation.priority} />
               </Detail>
               <Detail label="Case type">{investigation.caseType}</Detail>
-              <Detail label="Lead investigator">{investigation.leadInvestigator}</Detail>
+              <Detail label="Lead investigator">{investigation.leadInvestigator.displayName}</Detail>
               <Detail label="Location">{investigation.location}</Detail>
               <Detail label="Last updated">{formatDateTime(investigation.updatedAt)}</Detail>
             </dl>
@@ -157,8 +157,8 @@ function CurrentInvestigationCard({ id, className }: { id: string | null; classN
                 {nextStepByStage[investigation.stage]}
               </p>
               <Button asChild variant="outline" size="sm">
-                <Link to="/evidence">
-                  Open evidence <ArrowRight />
+                <Link to={`/investigations/${investigation.reference}`}>
+                  Open investigation <ArrowRight />
                 </Link>
               </Button>
             </div>
@@ -179,7 +179,8 @@ function Detail({ label, children }: { label: string; children: React.ReactNode 
 }
 
 function InvestigationsTable() {
-  const { data: investigations, isPending } = useInvestigations()
+  const { data: page, isPending } = useInvestigations({ limit: 10 })
+  const investigations = page?.items
   const { currentInvestigationId, setCurrentInvestigation } = useInvestigationContext()
 
   return (
@@ -210,25 +211,25 @@ function InvestigationsTable() {
                   </TableRow>
                 ))
               : investigations?.map((investigation) => {
-                  const selected = investigation.id === currentInvestigationId
+                  const selected = investigation.reference === currentInvestigationId
                   return (
                     <TableRow
-                      key={investigation.id}
+                      key={investigation.reference}
                       data-state={selected ? 'selected' : undefined}
                       className="cursor-pointer"
-                      onClick={() => setCurrentInvestigation(investigation.id)}
+                      onClick={() => setCurrentInvestigation(investigation.reference)}
                     >
                       <TableCell className="pl-6">
                         {/* A real button keeps rows usable by keyboard and screen readers */}
                         <button
                           type="button"
-                          onClick={() => setCurrentInvestigation(investigation.id)}
+                          onClick={() => setCurrentInvestigation(investigation.reference)}
                           aria-pressed={selected}
-                          aria-label={`Make ${investigation.id} the current investigation`}
+                          aria-label={`Make ${investigation.reference} the current investigation`}
                           className="rounded outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           <IdTag className={cn(selected && 'border-primary/40 text-primary')}>
-                            {investigation.id}
+                            {investigation.reference}
                           </IdTag>
                         </button>
                       </TableCell>
@@ -240,7 +241,7 @@ function InvestigationsTable() {
                         <PriorityBadge priority={investigation.priority} />
                       </TableCell>
                       <TableCell className="hidden text-muted-foreground md:table-cell">
-                        {investigation.leadInvestigator}
+                        {investigation.leadInvestigator.displayName}
                       </TableCell>
                       <TableCell className="hidden pr-6 text-muted-foreground tabular-nums lg:table-cell">
                         {formatDateTime(investigation.updatedAt)}

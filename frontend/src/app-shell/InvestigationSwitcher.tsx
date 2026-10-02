@@ -18,9 +18,10 @@ import { StatusBadge } from '@/design-system/badges'
 export function InvestigationSwitcher() {
   const { data: user } = useCurrentUser()
   const allowed = can(user, 'investigation:read')
-  const { data: investigations, isPending } = useInvestigations(allowed)
+  const { data: page, isPending } = useInvestigations({ limit: 50 }, allowed)
+  const investigations = page?.items
   const { currentInvestigationId, setCurrentInvestigation } = useInvestigationContext()
-  const current = investigations?.find((i) => i.id === currentInvestigationId)
+  const current = investigations?.find((i) => i.reference === currentInvestigationId)
 
   if (!allowed) return null
   if (isPending) return <Skeleton className="h-8 w-56" />
@@ -30,7 +31,7 @@ export function InvestigationSwitcher() {
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="max-w-72 justify-between gap-2 font-normal">
           <FolderSearch className="text-muted-foreground" />
-          <span className="font-mono text-xs">{current?.id ?? 'Select investigation'}</span>
+          <span className="font-mono text-xs">{current?.reference ?? 'Select investigation'}</span>
           <span className="hidden truncate text-muted-foreground xl:inline">{current?.title}</span>
           <ChevronsUpDown className="text-muted-foreground" />
         </Button>
@@ -40,18 +41,18 @@ export function InvestigationSwitcher() {
         <DropdownMenuSeparator />
         {investigations?.map((investigation) => (
           <DropdownMenuItem
-            key={investigation.id}
-            onSelect={() => setCurrentInvestigation(investigation.id)}
+            key={investigation.reference}
+            onSelect={() => setCurrentInvestigation(investigation.reference)}
             className="items-start gap-2 py-2"
           >
             <Check
               className={
-                investigation.id === currentInvestigationId ? 'mt-0.5 opacity-100' : 'mt-0.5 opacity-0'
+                investigation.reference === currentInvestigationId ? 'mt-0.5 opacity-100' : 'mt-0.5 opacity-0'
               }
             />
             <div className="min-w-0 flex-1 space-y-1">
               <div className="flex items-center justify-between gap-2">
-                <span className="font-mono text-xs">{investigation.id}</span>
+                <span className="font-mono text-xs">{investigation.reference}</span>
                 <StatusBadge kind="investigation" status={investigation.status} />
               </div>
               <p className="truncate text-sm">{investigation.title}</p>

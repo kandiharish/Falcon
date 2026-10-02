@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.schemas import AuditEntry, UserSummary
+from app.api.schemas import AuditEntry, UserSummary, audit_entry
 from app.db.session import get_db
 from app.models import AuditLog, User
 from app.security.dependencies import require_permission
@@ -46,18 +46,4 @@ def list_audit_entries(
     limit: Annotated[int, Query(ge=1, le=200)] = 50,
 ) -> list[AuditEntry]:
     rows = db.scalars(select(AuditLog).order_by(AuditLog.id.desc()).limit(limit)).all()
-    return [
-        AuditEntry(
-            id=r.id,
-            occurred_at=r.occurred_at,
-            actor_email=r.actor_email,
-            action=r.action,
-            object_type=r.object_type,
-            object_id=r.object_id,
-            previous_state=r.previous_state,
-            new_state=r.new_state,
-            note=r.note,
-            ip_address=str(r.ip_address) if r.ip_address else None,
-        )
-        for r in rows
-    ]
+    return [audit_entry(r) for r in rows]

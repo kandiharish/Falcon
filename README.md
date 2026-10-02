@@ -18,7 +18,8 @@ phase-by-phase learning notes are in [docs/learning/](docs/learning/).
 | P1 Skeleton (browser ↔ API ↔ database) | ✅ |
 | P2 Design system + application shell | ✅ |
 | P3 Authentication, roles, audit foundation | ✅ |
-| P4 Investigations + database domain model | next |
+| P4 Investigation management (real data, team isolation, audit history) | ✅ |
+| P5 Evidence upload, integrity and processing jobs | next |
 
 ## Prerequisites
 
@@ -35,7 +36,12 @@ docker compose ps           # "db" should show (healthy)
 
 The database listens on `127.0.0.1:5434` (see `POSTGRES_PORT` in `.env`).
 
-## Run the app (three terminals)
+## Run the app
+
+**Windows, one command:** `.\dev.ps1` — starts Docker, the database, applies migrations and opens
+the backend and frontend in their own windows.
+
+Or by hand, in three terminals:
 
 ```sh
 docker compose up -d                                          # 1. database
@@ -48,7 +54,8 @@ First time only — create the tables and the fictional demo users:
 ```sh
 cd backend
 uv run alembic upgrade head                    # create/upgrade database tables
-uv run python -m app.scripts.seed_demo_users   # password = DEMO_PASSWORD in .env
+uv run python -m app.scripts.seed_demo_users            # password = DEMO_PASSWORD in .env
+uv run python -m app.scripts.seed_demo_investigations   # fictional demo cases + teams
 ```
 
 Open http://localhost:5190. API docs: http://localhost:8010/api/docs
@@ -63,6 +70,7 @@ Open http://localhost:5190. API docs: http://localhost:8010/api/docs
 
 ```
 falcon/
+├── dev.ps1             start everything (Windows)
 ├── backend/            FastAPI API (Python, uv)
 ├── frontend/           React + TypeScript web app (Vite)
 ├── infra/postgres/     database image (Dockerfile) + first-run SQL
