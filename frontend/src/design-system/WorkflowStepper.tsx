@@ -24,7 +24,7 @@ export function WorkflowStepper({ stage, className }: { stage: WorkflowStage; cl
                 'inline-flex h-6 items-center gap-1 rounded-full px-2 text-xs whitespace-nowrap',
                 state === 'done' && 'text-muted-foreground',
                 state === 'current' && 'bg-primary/10 font-medium text-primary ring-1 ring-primary/30',
-                state === 'upcoming' && 'text-muted-foreground/70',
+                state === 'upcoming' && 'text-muted-foreground',
               )}
             >
               {state === 'done' && <Check aria-hidden className="size-3" />}

@@ -26,3 +26,8 @@ storage/
 *.log
 .DS_Store
 Thumbs.db
+
+# Playwright end-to-end test output
+frontend/test-results/
+frontend/playwright-report/
+frontend/e2e/.auth/

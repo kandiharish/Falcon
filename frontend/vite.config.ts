@@ -1,7 +1,7 @@
 import path from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -10,6 +10,10 @@ export default defineConfig({
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),
     },
+  },
+  // Unit tests (Vitest): only src/**/*.test.ts. Browser tests live in e2e/ (Playwright).
+  test: {
+    include: ['src/**/*.test.ts'],
   },
   server: {
     // FALCON's own port; strictPort fails loudly instead of silently picking another one.

@@ -31,7 +31,7 @@ export function LevelBadge({ level, score, className }: { level: CorrelationLeve
         ))}
       </span>
       {term.label}
-      <span className="font-mono tabular-nums opacity-80">{score.toFixed(2)}</span>
+      <span className="font-mono tabular-nums">{score.toFixed(2)}</span>
     </span>
   )
 }

@@ -88,12 +88,13 @@
   --input: oklch(0.88 0.012 252);
   --ring: oklch(0.6 0.13 235);
 
-  /* Lightness <= 0.55 keeps small text >= 4.5:1 contrast on white (WCAG AA) */
-  --success: oklch(0.52 0.13 155);
-  --warning: oklch(0.55 0.13 62);
-  --info: oklch(0.53 0.13 240);
-  --signal: oklch(0.53 0.1 215);
-  --inferred: oklch(0.5 0.15 295);
+  /* Small status text sits on its own 10 % tint (badges), not on white: lightness <= 0.48
+     keeps it >= 4.5:1 there (WCAG AA). Checked by the axe tests in e2e/. */
+  --success: oklch(0.47 0.12 155);
+  --warning: oklch(0.48 0.12 62);
+  --info: oklch(0.48 0.13 240);
+  --signal: oklch(0.47 0.1 215);
+  --inferred: oklch(0.46 0.15 295);
 
   --chart-1: oklch(0.52 0.14 255);
   --chart-2: oklch(0.7 0.12 215);

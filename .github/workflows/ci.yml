@@ -1,0 +1,125 @@
+# FALCON continuous integration: on every push and pull request, GitHub's machines
+# rebuild everything from scratch and run every check. Free for public repositories.
+#
+#   backend   lint · static security analysis · dependency audit · 130+ API tests on PostgreSQL
+#   frontend  lint · types · unit tests · production build · dependency audit
+#   e2e       the whole stack + demo data, driven by a real browser (Playwright + axe)
+#
+# The AI model is not used here (tests use a fake provider); everything else is real.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # CI-only values for a throw-away database on the runner. Not secrets: nothing is deployed.
+  POSTGRES_DB: falcon
+  POSTGRES_USER: falcon
+  POSTGRES_PASSWORD: ci-only-database-password
+  POSTGRES_HOST: 127.0.0.1
+  POSTGRES_PORT: "5434"
+  FALCON_SECRET_KEY: ci-only-secret-key-not-used-anywhere-else
+  DEMO_PASSWORD: ci-only-demo-password
+  AI_ENABLED: "false"
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+      - name: Start PostgreSQL (PostGIS + pgvector)
+        working-directory: .
+        run: docker compose up -d --wait db
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      - name: Lint and format
+        run: uv run ruff check . && uv run ruff format --check .
+      - name: Static security analysis (Bandit)
+        run: uvx bandit -q -r app -x app/scripts
+      - name: Known vulnerabilities in dependencies (pip-audit)
+        run: uv run --with pip-audit pip-audit --skip-editable --progress-spinner off
+      - name: Tests
+        run: uv run pytest -q
+
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npx tsc -b --noEmit
+      - run: npm test
+      - run: npm run build
+      - name: Known vulnerabilities in shipped packages
+        run: npm audit --omit=dev
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker compose up -d --wait db
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Demo data and API
+        working-directory: backend
+        run: |
+          uv sync --frozen
+          uv run python -m app.scripts.reset_demo_data --yes
+          nohup uv run python -m app.worker > worker.log 2>&1 &
+          nohup uv run uvicorn app.main:app --port 8010 > api.log 2>&1 &
+          uv run python -m app.scripts.wait_for_processing 600
+      - name: Web app
+        working-directory: frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          nohup npm run dev > vite.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:5190/ > /dev/null && break; sleep 2; done
+      - name: End-to-end tests
+        working-directory: frontend
+        env:
+          CI: "true"
+          E2E_PASSWORD: ${{ env.DEMO_PASSWORD }}
+        run: npm run e2e
+      - name: Keep traces and logs when something fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results
+          path: |
+            frontend/test-results/
+            backend/*.log
+            frontend/vite.log
+          retention-days: 7
