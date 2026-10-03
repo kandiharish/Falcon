@@ -43,6 +43,11 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
+[tool.ruff.lint.isort]
+# Say which imports are ours instead of letting each machine guess (CI on Linux guessed
+# differently from Windows and sorted them differently).
+known-first-party = ["app", "tests"]
+
 [tool.ruff.lint.per-file-ignores]
 # Alembic writes long lines in generated migrations
 "migrations/versions/*" = ["E501"]
