@@ -15,18 +15,22 @@ import sys
 import time
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from app.core.config import get_settings
 from app.db.session import SessionLocal
 from app.models import (
+    Correlation,
     Entity,
     EntityMention,
     Event,
     EventParticipant,
     Evidence,
+    EvidenceReferenceCounter,
     Investigation,
     InvestigationMember,
+    Notification,
+    ProcessingJob,
     User,
 )
 from app.services import correlation_service
@@ -55,11 +59,33 @@ EVENT_TYPES = [
 
 
 def remove(db) -> None:
+    """Evidence never cascades away with its case (chain of custody), so the synthetic case
+    is taken apart explicitly, children first. The audit log keeps its entries."""
     case = db.scalar(select(Investigation).where(Investigation.reference == REFERENCE))
-    if case:
-        db.delete(case)  # cascades to everything inside the case
-        db.commit()
-        print(f"Removed {REFERENCE}.")
+    if case is None:
+        return
+    in_case = Investigation.id == case.id
+    events = select(Event.id).where(Event.investigation_id == case.id)
+    entities = select(Entity.id).where(Entity.investigation_id == case.id)
+    evidence = select(Evidence.id).where(Evidence.investigation_id == case.id)
+    for statement in (
+        delete(Correlation).where(Correlation.investigation_id == case.id),
+        delete(EventParticipant).where(EventParticipant.event_id.in_(events)),
+        delete(Event).where(Event.investigation_id == case.id),
+        delete(EntityMention).where(EntityMention.entity_id.in_(entities)),
+        delete(Entity).where(Entity.investigation_id == case.id),
+        delete(ProcessingJob).where(ProcessingJob.evidence_id.in_(evidence)),
+        delete(Notification).where(Notification.investigation_id == case.id),
+        delete(Evidence).where(Evidence.investigation_id == case.id),
+        delete(InvestigationMember).where(InvestigationMember.investigation_id == case.id),
+        delete(EvidenceReferenceCounter).where(
+            EvidenceReferenceCounter.investigation_id == case.id
+        ),
+        delete(Investigation).where(in_case),
+    ):
+        db.execute(statement)
+    db.commit()
+    print(f"Removed {REFERENCE}.")
 
 
 def main() -> int:

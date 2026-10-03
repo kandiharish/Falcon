@@ -10,6 +10,7 @@ from sqlalchemy import select
 from app.db.session import SessionLocal
 from app.main import app
 from app.models import Evidence, ProcessingJob
+from app.services import correlation_service
 from app.worker import process_job_by_id
 
 TEST_PASSWORD = "correct horse battery staple"
@@ -67,3 +68,11 @@ def process_latest_job(case: str, reference: str) -> None:
             .where(Evidence.investigation.has(reference=case))
         )
     process_job_by_id(job_id)
+    run_requested_correlations()
+
+
+def run_requested_correlations() -> None:
+    """Do what the worker does in the background: re-correlate cases that asked for it."""
+    with SessionLocal() as db:
+        while correlation_service.run_requested(db, settle_seconds=0):
+            pass

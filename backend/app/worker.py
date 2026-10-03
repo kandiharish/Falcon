@@ -145,8 +145,8 @@ def _finish(
         db, evidence, evidence.investigation, ok, job.error_message
     )
     db.commit()
-    if ok:  # new facts may connect this evidence to others
-        correlation_service.refresh_quietly(db, evidence.investigation_id)
+    if ok:  # new facts may connect this evidence to others: correlate again (in the background)
+        correlation_service.request_refresh(db, evidence.investigation_id)
 
 
 def requeue_stale_jobs(db: Session) -> int:
@@ -217,7 +217,10 @@ def main() -> None:
                         if count := requeue_stale_jobs(db):
                             log.warning("Re-queued %s stale job(s)", count)
                     last_stale_check = time.monotonic()
-                if not process_one():
+                busy = process_one()
+                with SessionLocal() as db:  # then any case waiting to be re-correlated
+                    busy = correlation_service.run_requested(db) or busy
+                if not busy:
                     time.sleep(POLL_SECONDS)
             except Exception:
                 # e.g. the database restarted. Keep the worker alive and try again shortly.

@@ -66,6 +66,8 @@ class Investigation(Base):
     # IANA time zone of the place under investigation (e.g. "Asia/Kolkata"). Times are stored
     # in UTC; this zone is used to show them, and to read times that were written without one.
     time_zone: Mapped[str] = mapped_column(String(64), default="UTC", server_default="UTC")
+    # Set when facts changed and correlation should run again; the worker picks it up.
+    correlation_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     tags: Mapped[list[str]] = mapped_column(ARRAY(String(40)), default=list)
 
     lead_investigator_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), index=True)

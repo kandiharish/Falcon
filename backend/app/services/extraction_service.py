@@ -221,7 +221,7 @@ def create_entity(
         context=context,
     )
     db.commit()
-    correlation_service.refresh_quietly(db, case.id)  # keep correlations current
+    correlation_service.request_refresh(db, case.id)  # the worker re-correlates
     return entity
 
 
@@ -250,7 +250,7 @@ def review_entity(
         context=context,
     )
     db.commit()
-    correlation_service.refresh_quietly(db, case.id)  # keep correlations current
+    correlation_service.request_refresh(db, case.id)  # the worker re-correlates
     return entity
 
 
@@ -393,7 +393,7 @@ def create_event(
         context=context,
     )
     db.commit()
-    correlation_service.refresh_quietly(db, case.id)  # keep correlations current
+    correlation_service.request_refresh(db, case.id)  # the worker re-correlates
     return get_event(db, user, case_reference, event.reference)
 
 
@@ -422,7 +422,7 @@ def review_event(
         context=context,
     )
     db.commit()
-    correlation_service.refresh_quietly(db, case.id)  # keep correlations current
+    correlation_service.request_refresh(db, case.id)  # the worker re-correlates
     return get_event(db, user, case_reference, reference)
 
 

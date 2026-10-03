@@ -1,6 +1,6 @@
 """Correlation service + API tests: automatic runs, explanations, review rules, stale results."""
 
-from tests.helpers import process_latest_job, signed_in, upload
+from tests.helpers import process_latest_job, run_requested_correlations, signed_in, upload
 
 # Valid-format fictional numbers (555-01xx): free-text detection only accepts VALID numbers.
 CALLS_CSV = (
@@ -110,6 +110,7 @@ def test_reviewed_correlations_become_stale_instead_of_disappearing(team):
         f"/api/investigations/{case}/entities/{phone['items'][0]['reference']}/review",
         json={"review_status": "rejected", "note": "OCR misread"},
     )
+    run_requested_correlations()  # what the worker does in the background
     [kept] = correlations(client, case)
     assert (
         kept["stale"] is True and kept["review_status"] == "confirmed"
@@ -128,9 +129,28 @@ def test_pending_correlations_disappear_when_no_longer_supported(team):
         f"/api/investigations/{case}/entities/{phone['items'][0]['reference']}/review",
         json={"review_status": "rejected", "note": "wrong number"},
     )
+    assert len(correlations(client, case)) == 1  # the review itself returns at once…
+    run_requested_correlations()  # …and the worker re-correlates in the background
     assert correlations(client, case) == []
 
 
 def test_non_members_cannot_see_correlations(team, make_user):
     outsider = signed_in(make_user("investigation_officer"))
     assert outsider.get(f"/api/investigations/{team['case']}/correlations").status_code == 404
+
+
+def test_refresh_runs_in_the_background_once_per_burst(team):
+    from app.db.session import SessionLocal
+    from app.models import Investigation
+    from app.services import correlation_service
+
+    client, case = team["officer"], team["case"]
+    upload(client, case, sightings(37), "a.csv", "vehicle")
+    process_latest_job(case, "VEH-001")
+    with SessionLocal() as db:
+        case_id = db.query(Investigation.id).filter(Investigation.reference == case).scalar()
+        correlation_service.request_refresh(db, case_id)
+        correlation_service.request_refresh(db, case_id)  # a burst of changes…
+        assert correlation_service.run_requested(db, settle_seconds=60) is False  # not yet
+        assert correlation_service.run_requested(db, settle_seconds=0) is True  # …one run
+        assert correlation_service.run_requested(db, settle_seconds=0) is False  # done

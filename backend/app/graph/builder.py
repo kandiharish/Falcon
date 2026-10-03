@@ -17,6 +17,15 @@ from typing import Any
 
 COMMUNICATION = {"call_made", "message_sent", "communication"}
 LEVEL_RANK = {"low": 0, "medium": 1, "high": 2}
+# Which links to keep first when there are too many to draw.
+EDGE_PRIORITY = {
+    "communicated_with": 0,
+    "connected_to": 1,
+    "related_evidence": 2,
+    "involved_in": 3,
+    "appears_in": 4,
+    "recorded_in": 5,
+}
 
 # ---------- Input ---------------------------------------------------------------------------
 
@@ -82,6 +91,7 @@ class Options:
     focus: str | None = None  # node id, e.g. "entity:V001"
     depth: int = 1
     max_nodes: int = 300
+    max_edges: int = 1200
 
 
 # ---------- Output --------------------------------------------------------------------------
@@ -155,6 +165,26 @@ def build(
         and (options.entity_types is None or e.entity_type in options.entity_types)
     }
     kept_events = [e for e in events if options.include_rejected or e.review_status != "rejected"]
+
+    # Big case, no focus: choose the best-connected items FIRST, from cheap counts on the raw
+    # facts, and only then build links among them. Building every link (16,000+ with their
+    # explanations on a 6,000-event case) just to throw most of them away was the slow part.
+    all_items = len(kept_entities) + (len(evidence) if options.include_evidence else 0)
+    all_items += len(kept_events) if options.include_events else 0
+    preselected = 0
+    if options.focus is None and all_items > options.max_nodes:
+        preselected = all_items
+        chosen = _best_connected(
+            kept_entities, evidence, mentions, kept_events, correlations, options
+        )
+        kept_entities = {r: e for r, e in kept_entities.items() if entity_id(r) in chosen}
+        evidence = [e for e in evidence if evidence_id(e.reference) in chosen]
+        if options.include_events:
+            kept_events = [e for e in kept_events if event_id(e.reference) in chosen]
+        else:  # events still connect the chosen entities to each other and to evidence
+            kept_events = [
+                e for e in kept_events if any(ref in kept_entities for ref, _ in e.participants)
+            ]
     nodes: dict[str, Node] = {}
     for e in kept_entities.values():
         nodes[entity_id(e.reference)] = Node(
@@ -194,20 +224,80 @@ def build(
     if options.focus:
         nodes, edges = _neighbourhood(nodes, edges, options.focus, options.depth)
 
-    total_nodes, total_edges = len(nodes), len(edges)
+    total_nodes, total_edges = max(len(nodes), preselected), len(edges)
     for edge in edges:
         nodes[edge.source].degree += 1
         nodes[edge.target].degree += 1
-    truncated = len(nodes) > options.max_nodes
+    truncated = len(nodes) > options.max_nodes or preselected > 0
     if truncated:
         # Too much to draw usefully: keep the best-connected nodes (and the focus).
         keep = sorted(nodes.values(), key=lambda n: (n.id != options.focus, -n.degree, n.id))
         allowed = {n.id for n in keep[: options.max_nodes]}
         nodes = {k: v for k, v in nodes.items() if k in allowed}
         edges = [e for e in edges if e.source in allowed and e.target in allowed]
+    if len(edges) > options.max_edges:
+        # Thousands of lines are unreadable (and slow to send): keep the most telling links
+        # — direct contact and correlations before "appears in" — strongest first.
+        truncated = True
+        edges = sorted(edges, key=lambda e: (EDGE_PRIORITY.get(e.type, 9), -e.confidence))[
+            : options.max_edges
+        ]
 
     ordered = sorted(nodes.values(), key=lambda n: (n.kind, n.reference))
     return Graph(ordered, edges, total_nodes, total_edges, truncated)
+
+
+def _best_connected(
+    entities: dict[str, EntityIn],
+    evidence: list[EvidenceIn],
+    mentions: list[MentionIn],
+    events: list[EventIn],
+    correlations: list[CorrelationIn],
+    options: Options,
+) -> set[str]:
+    """IDs of the `max_nodes` items with the most links, counted cheaply from the raw facts
+    (the same links the full build would draw, without building them)."""
+    degree: dict[str, int] = {}
+
+    def bump(node: str, by: int = 1) -> None:
+        degree[node] = degree.get(node, 0) + by
+
+    for e in entities:
+        degree.setdefault(entity_id(e), 0)
+    if options.include_evidence:
+        for ev in evidence:
+            degree.setdefault(evidence_id(ev.reference), 0)
+        appears: set[tuple[str, str]] = {
+            (m.entity, m.evidence) for m in mentions if m.entity in entities
+        }
+        appears |= {
+            (ref, ev.evidence) for ev in events for ref, _ in ev.participants if ref in entities
+        }
+        for ent, evd in appears:
+            bump(entity_id(ent))
+            bump(evidence_id(evd))
+        floor = LEVEL_RANK[options.min_level]
+        for c in correlations:
+            if (c.stale and not options.include_stale) or (
+                c.review_status == "rejected" and not options.include_rejected
+            ):
+                continue
+            if LEVEL_RANK[c.level] >= floor:
+                bump(evidence_id(c.evidence_a))
+                bump(evidence_id(c.evidence_b))
+    for ev in events:
+        refs = {ref for ref, _ in ev.participants if ref in entities}
+        for ref in refs:
+            bump(entity_id(ref), len(refs) - 1)  # links to the other participants
+        if options.include_events:
+            node = event_id(ev.reference)
+            bump(node, len(refs) + (1 if options.include_evidence else 0))
+            for ref in refs:
+                bump(entity_id(ref))
+            if options.include_evidence:
+                bump(evidence_id(ev.evidence))
+    ranked = sorted(degree, key=lambda node: (-degree[node], node))
+    return set(ranked[: options.max_nodes])
 
 
 def _appears_in(

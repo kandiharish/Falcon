@@ -26,6 +26,7 @@ WEIGHTS = {"entity": 0.45, "time": 0.30, "location": 0.25}
 TIME_WINDOW_S = 30 * 60
 RADIUS_M = 500.0
 HIGH, MEDIUM = 0.75, 0.50
+EARTH_RADIUS_M = 6_371_008.8  # mean Earth radius (the same idea as PostGIS geography)
 
 
 # ---------- Input ---------------------------------------------------------------------------
@@ -107,50 +108,52 @@ def level_for(score: float) -> str:
 def correlate(
     evidence: list[EvidenceFacts], describe_time=lambda t: t.isoformat()
 ) -> list[PairResult]:
-    """All evidence pairs that qualify as potential relationships, strongest first."""
-    by_id = {e.id: e for e in evidence}
-    proximity = _best_proximity(evidence)
-    pairs = set(proximity) | _pairs_sharing_entities(evidence)
+    """All evidence pairs that qualify as potential relationships, strongest first.
+
+    Inside the engine, evidence items and entities are numbered 0, 1, 2…: dictionary look-ups
+    on small integers are far cheaper than on UUIDs (hashing a UUID runs Python code, and the
+    inner loops do it millions of times on a big case). Sorting evidence by reference first
+    makes a pair's canonical order simply (smaller number, larger number).
+    """
+    items = sorted(evidence, key=lambda e: e.reference)
+    numbers: dict[uuid.UUID, int] = {}
+    entities = [
+        {numbers.setdefault(eid, len(numbers)): fact for eid, fact in item.entities.items()}
+        for item in items
+    ]
+    proximity = _best_proximity(items)
+    pairs = set(proximity) | _pairs_sharing_entities(entities)
 
     results: list[PairResult] = []
-    for a_id, b_id in sorted(pairs, key=lambda p: (by_id[p[0]].reference, by_id[p[1]].reference)):
-        a, b = by_id[a_id], by_id[b_id]
+    for a_n, b_n in sorted(pairs):
         factors: list[Factor] = []
-        entity = _entity_factor(a, b)
+        entity = _entity_factor(entities[a_n], entities[b_n])
         if entity:
             factors.append(entity)
-        best = proximity.get((a_id, b_id))
+        best = proximity.get((a_n, b_n))
         if best:
             factors.extend(_proximity_factors(best, describe_time))
         positive = [f for f in factors if f.score > 0]
         if entity or len(positive) >= 2:
-            results.append(PairResult(a, b, positive))
+            results.append(PairResult(items[a_n], items[b_n], positive))
     return sorted(results, key=lambda r: -r.score)
 
 
-def _ordered(a: EvidenceFacts, b: EvidenceFacts) -> tuple[uuid.UUID, uuid.UUID]:
-    """Each pair has ONE canonical order, so (A,B) and (B,A) are the same correlation."""
-    return (a.id, b.id) if a.reference <= b.reference else (b.id, a.id)
-
-
-def _pairs_sharing_entities(evidence: list[EvidenceFacts]) -> set[tuple[uuid.UUID, uuid.UUID]]:
-    holders: dict[uuid.UUID, list[EvidenceFacts]] = {}
-    for item in evidence:
-        for entity_id in item.entities:
-            holders.setdefault(entity_id, []).append(item)
-    pairs: set[tuple[uuid.UUID, uuid.UUID]] = set()
-    for items in holders.values():
-        for i, a in enumerate(items):
-            for b in items[i + 1 :]:
-                pairs.add(_ordered(a, b))
+def _pairs_sharing_entities(entities: list[dict[int, tuple]]) -> set[tuple[int, int]]:
+    holders: dict[int, list[int]] = {}
+    for n, held in enumerate(entities):
+        for entity in held:
+            holders.setdefault(entity, []).append(n)
+    pairs: set[tuple[int, int]] = set()
+    for owners in holders.values():  # owners are in ascending order already
+        for i, a in enumerate(owners):
+            for b in owners[i + 1 :]:
+                pairs.add((a, b))
     return pairs
 
 
-def _entity_factor(a: EvidenceFacts, b: EvidenceFacts) -> Factor | None:
-    shared = [
-        (a.entities[eid][0], min(a.entities[eid][1], b.entities[eid][1]))
-        for eid in a.entities.keys() & b.entities.keys()
-    ]
+def _entity_factor(a: dict[int, tuple], b: dict[int, tuple]) -> Factor | None:
+    shared = [(a[eid][0], min(a[eid][1], b[eid][1])) for eid in a.keys() & b.keys()]
     if not shared:
         return None
     shared.sort(key=lambda item: (-item[1], item[0].reference))
@@ -194,30 +197,67 @@ class _Proximity:
         return WEIGHTS["time"] * self.time_score + WEIGHTS["location"] * self.place_score
 
 
-def _best_proximity(evidence: list[EvidenceFacts]) -> dict[tuple[uuid.UUID, uuid.UUID], _Proximity]:
-    """For each evidence pair, the two events closest in time AND place.
+def _best_proximity(items: list[EvidenceFacts]) -> dict[tuple[int, int], _Proximity]:
+    """For each evidence pair (by position in `items`), the two events closest in time AND place.
 
     Sweep-line: sort all timed events once, then compare each event only with the events that
     follow it within the time window — not every event with every other (n log n, not n²).
     """
+    # Performance (measured on 6,000 events: 13.9 s → see docs/learning/phase-12.md):
+    #  • work on plain numbers: timestamp, radians and cos(latitude) computed ONCE per event,
+    #    not once per pair;
+    #  • walk forward by index (a slice `timed[i+1:]` would copy the list for every event);
+    #  • build a _Proximity object only for the pair that is currently the best.
     timed = sorted(
-        ((item, event) for item in evidence for event in item.events if event.occurred_at),
-        key=lambda pair: pair[1].occurred_at,  # type: ignore[arg-type, return-value]
+        (
+            (
+                event.occurred_at.timestamp(),  # type: ignore[union-attr]
+                n,
+                event,
+                *_radians(event),
+            )
+            for n, item in enumerate(items)
+            for event in item.events
+            if event.occurred_at
+        ),
+        key=lambda row: row[0],
     )
-    best: dict[tuple[uuid.UUID, uuid.UUID], _Proximity] = {}
-    for i, (item_a, event_a) in enumerate(timed):
-        for item_b, event_b in timed[i + 1 :]:
-            seconds = (event_b.occurred_at - event_a.occurred_at).total_seconds()  # type: ignore[operator]
+    w_time, w_place = WEIGHTS["time"], WEIGHTS["location"]
+    strongest: dict[tuple[int, int], float] = {}
+    best: dict[tuple[int, int], tuple[EventFact, EventFact, float, float | None]] = {}
+    count = len(timed)
+    for i in range(count):
+        t_a, item_a, event_a, lat_a, lon_a, cos_a = timed[i]
+        j = i + 1
+        while j < count:
+            t_b, item_b, event_b, lat_b, lon_b, cos_b = timed[j]
+            j += 1
+            seconds = t_b - t_a
             if seconds > TIME_WINDOW_S:
                 break  # sorted by time: every later event is even further away
-            if item_a.id == item_b.id:
+            if item_a == item_b:
                 continue
-            metres = _metres(event_a, event_b)
-            candidate = _Proximity(event_a, event_b, seconds, metres)
-            key = _ordered(item_a, item_b)
-            if key not in best or candidate.strength > best[key].strength:
-                best[key] = candidate
-    return best
+            metres = None
+            if lat_a is not None and lat_b is not None:
+                h = (
+                    math.sin((lat_b - lat_a) / 2) ** 2
+                    + cos_a * cos_b * math.sin((lon_b - lon_a) / 2) ** 2
+                )
+                metres = 2 * EARTH_RADIUS_M * math.asin(math.sqrt(h))
+            place = 0.0 if metres is None else max(0.0, 1 - metres / RADIUS_M)
+            strength = w_time * (1 - seconds / TIME_WINDOW_S) + w_place * place
+            key = (item_a, item_b) if item_a < item_b else (item_b, item_a)
+            if strength > strongest.get(key, -1.0):
+                strongest[key] = strength
+                best[key] = (event_a, event_b, seconds, metres)
+    return {key: _Proximity(*value) for key, value in best.items()}
+
+
+def _radians(event: EventFact) -> tuple[float | None, float | None, float]:
+    if event.latitude is None or event.longitude is None:
+        return None, None, 0.0
+    lat = math.radians(event.latitude)
+    return lat, math.radians(event.longitude), math.cos(lat)
 
 
 def _proximity_factors(p: _Proximity, describe_time) -> list[Factor]:
@@ -263,12 +303,11 @@ def _metres(a: EventFact, b: EventFact) -> float | None:
     """Great-circle distance (haversine) — the same idea as PostGIS geography distance."""
     if None in (a.latitude, a.longitude, b.latitude, b.longitude):
         return None
-    earth = 6_371_008.8  # mean Earth radius in metres
     lat1, lat2 = math.radians(a.latitude), math.radians(b.latitude)  # type: ignore[arg-type]
     d_lat = lat2 - lat1
     d_lon = math.radians(b.longitude - a.longitude)  # type: ignore[operator]
     h = math.sin(d_lat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(d_lon / 2) ** 2
-    return 2 * earth * math.asin(math.sqrt(h))
+    return 2 * EARTH_RADIUS_M * math.asin(math.sqrt(h))
 
 
 def _human_seconds(seconds: float) -> str:

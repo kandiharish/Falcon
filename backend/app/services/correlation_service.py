@@ -10,10 +10,10 @@ Running is safe to repeat:
 import logging
 import uuid
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.orm import Session, selectinload
 
 from app.correlation import engine
@@ -34,6 +34,7 @@ from app.services.errors import ForbiddenError, InvalidInputError, NotFoundError
 from app.services.request_context import RequestContext
 
 log = logging.getLogger("falcon.correlation")
+SETTLE_SECONDS = 2.0  # wait for a burst of changes to finish before re-running
 
 
 @dataclass(frozen=True)
@@ -82,13 +83,15 @@ def run_for_case(
     }
     created = updated = 0
     seen: set[tuple[uuid.UUID, uuid.UUID]] = set()
+    # Number all new pairs with ONE reservation (strongest first get the lowest numbers).
+    new_pairs = sum(1 for r in results if (r.evidence_a.id, r.evidence_b.id) not in existing)
+    number = reference_counters.reserve(db, case.id, "COR", new_pairs) if new_pairs else 0
     for result in results:
         key = (result.evidence_a.id, result.evidence_b.id)
         seen.add(key)
         factors = [f.as_dict() for f in result.factors]
         correlation = existing.get(key)
         if correlation is None:
-            number = reference_counters.next_value(db, case.id, "COR")
             db.add(
                 Correlation(
                     investigation_id=case.id,
@@ -102,6 +105,7 @@ def run_for_case(
                     stale=False,
                 )
             )
+            number += 1
             created += 1
         elif (
             correlation.score != result.score or correlation.factors != factors or correlation.stale
@@ -347,13 +351,53 @@ def _require_reviewer(db: Session, user: User, case: Investigation) -> None:
         raise ForbiddenError("Your role cannot run or review correlations for this case.")
 
 
-def refresh_quietly(db: Session, investigation_id: uuid.UUID) -> None:
-    """Re-run correlation after something changed (new evidence processed, a fact reviewed).
-    A failure here must never break the action that triggered it, so it is logged instead."""
+def request_refresh(db: Session, investigation_id: uuid.UUID) -> None:
+    """Ask for correlation to run again after something changed (evidence processed, a fact
+    reviewed). Only a timestamp is written: the request returns at once, and the worker does
+    the heavy work in the background (run_requested). Never breaks the action that called it."""
     try:
-        case = db.get(Investigation, investigation_id)
+        db.execute(
+            update(Investigation)
+            .where(Investigation.id == investigation_id)
+            .values(correlation_requested_at=func.now())
+        )
+        db.commit()
+    except Exception:
+        log.exception("Could not request a correlation refresh for %s", investigation_id)
+        db.rollback()
+
+
+def run_requested(db: Session, settle_seconds: float = SETTLE_SECONDS) -> bool:
+    """Worker side: run correlation for ONE case that asked for it. Returns False if none did.
+
+    Waiting `settle_seconds` after the last request lets a burst of reviews become one run.
+    The request is claimed by clearing it in one atomic statement (SKIP LOCKED: two workers
+    never take the same case). A request made while the run is going sets it again, so the
+    newest change is always correlated.
+    """
+    cutoff = datetime.now(UTC) - timedelta(seconds=settle_seconds)
+    waiting = (
+        select(Investigation.id)
+        .where(Investigation.correlation_requested_at <= cutoff)
+        .order_by(Investigation.correlation_requested_at)
+        .limit(1)
+        .with_for_update(skip_locked=True)
+        .scalar_subquery()
+    )
+    claimed = db.scalar(
+        update(Investigation)
+        .where(Investigation.id == waiting)
+        .values(correlation_requested_at=None)
+        .returning(Investigation.id)
+    )
+    db.commit()
+    if claimed is None:
+        return False
+    try:
+        case = db.get(Investigation, claimed)
         if case is not None:
             run_for_case(db, case)
     except Exception:
-        log.exception("Automatic correlation refresh failed for investigation %s", investigation_id)
+        log.exception("Correlation refresh failed for investigation %s", claimed)
         db.rollback()
+    return True
