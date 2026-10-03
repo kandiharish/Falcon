@@ -13,6 +13,7 @@ from app.core.config import get_settings
 from app.db.session import get_db
 from app.models import UserSession
 from app.security.dependencies import current_session, pending_or_current_session
+from app.security.rate_limit import limit
 from app.services import auth_service, mfa_service
 from app.services.request_context import request_context
 
@@ -71,7 +72,7 @@ def _set_session_cookie(response: Response, token: str, max_age: int | None) -> 
     )
 
 
-@router.post("/login", response_model=LoginResponse)
+@router.post("/login", response_model=LoginResponse, dependencies=[Depends(limit("login", 10))])
 def login(body: LoginRequest, request: Request, response: Response, db: DB) -> LoginResponse:
     try:
         result = auth_service.sign_in(
@@ -89,7 +90,9 @@ def login(body: LoginRequest, request: Request, response: Response, db: DB) -> L
     )
 
 
-@router.post("/mfa/verify", response_model=CurrentUserResponse)
+@router.post(
+    "/mfa/verify", response_model=CurrentUserResponse, dependencies=[Depends(limit("mfa", 10))]
+)
 def verify_code(
     body: CodeIn, request: Request, session: PendingOrCurrent, db: DB
 ) -> CurrentUserResponse:

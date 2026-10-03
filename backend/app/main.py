@@ -18,22 +18,28 @@ from app.api import (
     reports,
     work,
 )
+from app.core import production
 from app.core.config import get_settings
 from app.security.csrf import CSRFHeaderMiddleware
+from app.security.headers import SecurityHeadersMiddleware
 from app.services.errors import DomainError
 
 
 def create_app() -> FastAPI:
     settings = get_settings()
+    production.check(settings)  # refuses to start with unsafe production settings
+    dev = settings.environment != "production"
     app = FastAPI(
         title=f"{settings.app_name} API",
         description="Forensic Analysis and Linked Crime Observation Network",
         version="0.1.0",
-        docs_url="/api/docs",
-        openapi_url="/api/openapi.json",
+        # Interactive docs and the schema describe every endpoint: development only.
+        docs_url="/api/docs" if dev else None,
+        openapi_url="/api/openapi.json" if dev else None,
         redoc_url=None,
     )
     app.add_middleware(CSRFHeaderMiddleware)
+    app.add_middleware(SecurityHeadersMiddleware)
 
     # Services raise domain errors with human-readable messages; send them as JSON.
     @app.exception_handler(DomainError)

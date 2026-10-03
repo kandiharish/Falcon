@@ -10,6 +10,7 @@ features. No SDK: Ollama's API is plain HTTP + JSON, so the standard library is 
 import json
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
 from typing import Any, Protocol
@@ -62,6 +63,10 @@ class OllamaProvider:
     def __init__(self) -> None:
         settings = get_settings()
         self.url = settings.ollama_url.rstrip("/")
+        # urlopen also reads file:// and other schemes; only plain web addresses are allowed,
+        # so a mistaken setting can never make FALCON read local files.
+        if urllib.parse.urlsplit(self.url).scheme not in ("http", "https"):
+            raise ValueError("OLLAMA_URL must start with http:// or https://")
         self.chat_model = settings.ai_chat_model
         self.embed_model = settings.ai_embed_model
         self.timeout = settings.ai_timeout_seconds
@@ -74,7 +79,8 @@ class OllamaProvider:
             method="POST",
         )
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            # B310 (urlopen accepts file://): safe, the scheme is checked in __init__.
+            with urllib.request.urlopen(request, timeout=self.timeout) as response:  # nosec B310
                 return json.loads(response.read())
         except urllib.error.HTTPError as error:
             detail = error.read().decode("utf-8", "replace")[:300]
@@ -134,7 +140,7 @@ class OllamaProvider:
 
     def status(self) -> AIStatus:
         try:
-            with urllib.request.urlopen(f"{self.url}/api/tags", timeout=3) as response:
+            with urllib.request.urlopen(f"{self.url}/api/tags", timeout=3) as response:  # nosec B310
                 names = {m["name"] for m in json.loads(response.read()).get("models", [])}
         except (urllib.error.URLError, TimeoutError, ConnectionError):
             return AIStatus(

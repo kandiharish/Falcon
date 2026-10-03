@@ -14,6 +14,7 @@ from app.db.session import get_db
 from app.models import Evidence, ProcessingJob, User
 from app.security.dependencies import require_permission
 from app.security.permissions import Permission
+from app.security.rate_limit import limit
 from app.services import evidence_service as service
 from app.services.errors import NotFoundError
 from app.services.request_context import request_context
@@ -170,7 +171,12 @@ def list_evidence(
     return EvidencePage(items=[_out(e) for e in items], total=total, limit=limit, offset=offset)
 
 
-@router.post("", response_model=EvidenceOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=EvidenceOut,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(limit("upload", 30, by="user"))],
+)
 def upload_evidence(
     case_reference: str,
     request: Request,

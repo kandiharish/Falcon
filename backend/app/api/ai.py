@@ -19,6 +19,7 @@ from app.db.session import SessionLocal, get_db
 from app.models import User
 from app.security.dependencies import require_permission
 from app.security.permissions import Permission
+from app.security.rate_limit import limit
 from app.services import ai_index_service, investigation_service, nl_search_service
 from app.services import similarity_service as similarity
 from app.services.request_context import request_context
@@ -114,7 +115,11 @@ def status(_: Reader) -> AIStatusOut:
     return AIStatusOut(**ai.current().status().__dict__)
 
 
-@router.post(f"{CASE}/ai/search", response_model=SearchOut)
+@router.post(
+    f"{CASE}/ai/search",
+    response_model=SearchOut,
+    dependencies=[Depends(limit("ai-search", 20, by="user"))],
+)
 def search(
     case_reference: str, body: SearchIn, request: Request, user: Reader, db: DB
 ) -> SearchOut:
@@ -172,7 +177,7 @@ def reindex(case_reference: str, request: Request, user: Reader, db: DB) -> Rein
     )
 
 
-@router.post(f"{CASE}/assistant")
+@router.post(f"{CASE}/assistant", dependencies=[Depends(limit("assistant", 6, by="user"))])
 def ask(
     case_reference: str, body: AskIn, request: Request, user: Reader, db: DB
 ) -> StreamingResponse:
@@ -186,7 +191,8 @@ def ask(
         # The stream outlives this request's database session: use our own.
         with SessionLocal() as session:
             me = session.get(User, user_id)
-            assert me is not None
+            if me is None:  # deleted between the request and the stream: nothing to say
+                return
             case = investigation_service.get_investigation(session, me, case_reference)
             try:
                 for event in assistant.ask(session, me, case, body.question, history, context):

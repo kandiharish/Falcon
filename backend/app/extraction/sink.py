@@ -107,9 +107,11 @@ class ExtractionSink:
                 with self.db.begin_nested():
                     self.db.add(candidate)
                 entity = candidate
-            except IntegrityError:
+            except IntegrityError as error:
                 entity = self._lookup(entity_type, key)
-                assert entity is not None
+                if entity is None:  # the row that won the race must exist; fail loudly if not
+                    message = f"Entity {entity_type}:{key} vanished during extraction."
+                    raise RuntimeError(message) from error
         elif attributes:
             entity.attributes = {**attributes, **(entity.attributes or {})}  # keep existing values
         self._entities[cache_key] = entity

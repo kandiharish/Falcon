@@ -102,3 +102,12 @@ def offline_ai() -> Iterator[None]:
     provider.use(OfflineProvider())
     yield
     provider.use(None)
+
+
+@pytest.fixture(autouse=True)
+def fresh_rate_limits() -> Iterator[None]:
+    """Each test starts with empty rate-limit counters (the suite signs in many times)."""
+    from app.security.rate_limit import WINDOW
+
+    WINDOW.reset()
+    yield
