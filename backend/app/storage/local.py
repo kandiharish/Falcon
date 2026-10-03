@@ -17,9 +17,9 @@ import shutil
 import stat
 import tempfile
 from collections.abc import Iterator
-from typing import BinaryIO
 from dataclasses import dataclass
 from pathlib import Path
+from typing import BinaryIO
 
 from app.core.config import get_settings
 
