@@ -17,7 +17,9 @@ dist/
 *.tsbuildinfo
 
 # --- Local evidence files (uploaded during development) ---
-storage/
+# Evidence files live in /storage at the repository root. The leading slash matters:
+# without it, backend/app/storage (code!) was ignored too and never reached GitHub.
+/storage/
 
 # --- Browser-automation scratch files ---
 .playwright-mcp/
