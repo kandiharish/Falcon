@@ -1,0 +1,85 @@
+# FALCON in production: everything in containers, HTTPS by Caddy, the database never exposed.
+#
+#   cp deploy/.env.production.example deploy/.env.production   # then fill it in
+#   docker compose -f docker-compose.prod.yml --env-file deploy/.env.production up -d --build
+#   docker compose -f docker-compose.prod.yml --env-file deploy/.env.production run --rm api \
+#       python -m app.scripts.create_admin                     # first administrator
+#
+# Add --profile ai to also run the local AI (Ollama; needs ~8 GB RAM for qwen3:8b).
+name: falcon-prod
+
+x-backend: &backend
+  build: ./backend
+  image: falcon-backend:latest
+  restart: unless-stopped
+  env_file: deploy/.env.production
+  environment:
+    POSTGRES_HOST: db
+    POSTGRES_PORT: "5432"
+    OLLAMA_URL: http://ollama:11434
+  volumes:
+    - evidence:/data/storage # original evidence files: back this up together with the database
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  db:
+    build: ./infra/postgres
+    image: falcon-postgres:17
+    restart: unless-stopped
+    env_file: deploy/.env.production
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    # No "ports:": only the other containers can reach the database, never the internet.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  migrate: # runs once at start-up: brings the database schema up to date
+    <<: *backend
+    restart: "no"
+    command: ["alembic", "upgrade", "head"]
+
+  api:
+    <<: *backend
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  worker:
+    <<: *backend
+    command: ["python", "-m", "app.worker"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  web:
+    build: ./frontend
+    image: falcon-web:latest
+    restart: unless-stopped
+    env_file: deploy/.env.production
+    ports:
+      - "${WEB_HTTP_PORT:-80}:80"
+      - "${WEB_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data # certificates: keep, or Let's Encrypt limits may block new ones
+    depends_on:
+      - api
+
+  ollama:
+    profiles: ["ai"]
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama:/root/.ollama
+
+volumes:
+  pgdata:
+  evidence:
+  caddy-data:
+  ollama:

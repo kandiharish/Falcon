@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!deploy/.env.production.example
 
 # --- Python ---
 __pycache__/
@@ -33,3 +34,9 @@ Thumbs.db
 frontend/test-results/
 frontend/playwright-report/
 frontend/e2e/.auth/
+
+# Production settings (secrets). Only the .example file is committed.
+deploy/.env.production
+
+# Backups made by deploy/backup.sh
+backups/

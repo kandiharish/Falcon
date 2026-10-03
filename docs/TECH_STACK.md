@@ -83,11 +83,16 @@ Legend: ✅ in use now · 🔜 planned (phase)
 | pgvector (+ `pgvector` Python 0.5) | 0.8 | ✅ P0, used P10 | Vector similarity search: `evidence_chunks.embedding vector(384)` with an HNSW cosine index | Similar evidence and meaning-based search without a separate vector DB. |
 | pg_trgm | 1.6 | ✅ P0 | Fuzzy text search | "CCTV-01" finds "CCTV-001". Replaces Elasticsearch for our scale. |
 | Graph in PostgreSQL | — | ✅ P9 | Graph = a view over mentions, event participants and correlations, built per request by a pure Python builder (BFS for focus) | One database = no sync problems, no copy that can go stale. Neo4j only if cases ever reach millions of links. |
-| Docker Desktop + Compose | 29 / v5 | ✅ P0 | Runs PostgreSQL in a container | Same setup on any machine; nothing installed into Windows. |
+| Docker Desktop + Compose | 29 / v5 | ✅ P0, P12 | Development: PostgreSQL in a container. Production: the whole stack (`docker-compose.prod.yml`) | Same setup on any machine; nothing installed into Windows. |
+| PostgreSQL image | pgvector/pgvector:pg17 + PostGIS 3.6 | ✅ P12 | Database with vectors and geography | *Changed in P12:* the old postgis/postgis:17-3.5 base (Debian bullseye) could no longer be built; CI caught it. |
+| Caddy | 2 | ✅ P12 | Production web server: automatic HTTPS (Let's Encrypt), security headers, serves the React app, proxies /api | One small config file; certificates renew themselves. Nginx needs certbot and more configuration. |
 | WSL 2 | 2.7 | ✅ P0 | Linux kernel for Docker on Windows | Containers are Linux programs. |
 | Local disk storage | — | ✅ P5 | Evidence files (`storage/`, git-ignored; originals read-only) | MinIO's free edition was archived in 2026; `app/storage/local.py` can be swapped for S3-compatible storage later. |
 | Git + GitHub | — | ✅ P0 | Version control + backup | github.com/kandiharish/Falcon |
-| GitHub Actions | — | 🔜 P12 | Automatic tests on every push | Free for public repos. |
+| GitHub Actions | — | ✅ P12 | CI on every push: backend (ruff, Bandit, pip-audit, pytest on PostGIS+pgvector), frontend (lint, types, Vitest, build, npm audit), end-to-end browser tests on seeded demo data, production image builds | Free for public repos. Found three real problems on its first day. |
+| Vitest | 5 | ✅ P12 | Frontend unit tests (time zones, citations, formatting) | Reuses the Vite config; fast. |
+| Playwright + axe-core | 1.6x / 4 | ✅ P12 | End-to-end browser tests and WCAG 2.1 AA accessibility checks (light and dark) | Edge locally (no download), Chromium in CI. |
+| Bandit · pip-audit · npm audit | — | ✅ P12 | Static security analysis and known-vulnerability checks | Free; run locally and in CI. |
 
 ## 4. AI & processing — every model
 
@@ -121,7 +126,7 @@ call audited, output labelled *AI-Assisted · Requires Review*.
 | Tool | Role |
 |---|---|
 | **Claude Opus 5.5** (Anthropic), via Claude Code in VS Code | Development assistant: writes code, runs tests, explains. **Not part of FALCON** — it never runs inside the product. |
-| Playwright | Drives a real browser to test screens (used during development; automated E2E tests in P12). |
+| Playwright | Drives a real browser: by Claude while building, and as the automated E2E suite (`npm run e2e`) since P12. |
 
 ## 6. Ports on this machine
 

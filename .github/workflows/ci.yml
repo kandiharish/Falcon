@@ -123,3 +123,15 @@ jobs:
             backend/*.log
             frontend/vite.log
           retention-days: 7
+
+  images:
+    # The production images must always build: base images and package servers change
+    # (this is how we found that Debian bullseye packages had disappeared).
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build production images (not pushed anywhere)
+        run: |
+          cp deploy/.env.production.example deploy/.env.production
+          docker compose -f docker-compose.prod.yml --env-file deploy/.env.production build

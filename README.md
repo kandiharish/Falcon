@@ -1,5 +1,7 @@
 # FALCON
 
+[![CI](https://github.com/kandiharish/Falcon/actions/workflows/ci.yml/badge.svg)](https://github.com/kandiharish/Falcon/actions/workflows/ci.yml)
+
 **Forensic Analysis and Linked Crime Observation Network** — an investigation-support
 platform that turns fragmented evidence into connected, explainable intelligence while
 keeping the investigator in control.
@@ -26,7 +28,7 @@ phase-by-phase learning notes are in [docs/learning/](docs/learning/).
 | P9 Relationship graph: explainable links, focus, list view | ✅ |
 | P10 Local AI: plain-words search, similar evidence, Investigation Assistant agent | ✅ |
 | P11 Tasks, notifications, reports, dashboard, global search, audit log, user management, MFA | ✅ |
-| P12 Security hardening, tests, performance, free deployment | next |
+| P12 Security hardening, tests + CI, performance, production deployment | ✅ |
 
 ## Prerequisites
 
@@ -83,6 +85,21 @@ Open http://localhost:5190. API docs: http://localhost:8010/api/docs
 | Frontend | 5190 | Vite dev server; proxies `/api` to the backend |
 | Backend  | 8010 | FastAPI |
 | Database | 5434 | PostgreSQL in Docker |
+
+## Tests
+
+```sh
+cd backend  && uv run pytest -q          # 130+ API, service and security tests
+cd frontend && npm test                  # unit tests (Vitest)
+cd frontend && npm run e2e               # browser tests + accessibility (needs the dev stack + demo data)
+```
+Every push runs all of them on GitHub Actions, plus security scans and the production image build.
+
+## Deploying
+
+See [docs/DEPLOY.md](docs/DEPLOY.md): the production stack (HTTPS by Caddy, database never exposed),
+a $0 option on Oracle Cloud's Always Free tier, backups, and a checklist. Security overview:
+[docs/SECURITY.md](docs/SECURITY.md).
 
 ## Upgrading an existing database (October 2026)
 
