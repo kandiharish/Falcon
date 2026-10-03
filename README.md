@@ -84,6 +84,20 @@ Open http://localhost:5190. API docs: http://localhost:8010/api/docs
 | Backend  | 8010 | FastAPI |
 | Database | 5434 | PostgreSQL in Docker |
 
+## Upgrading an existing database (October 2026)
+
+The database image moved to a newer Debian release (the old one reached end of life). If you
+already have a FALCON database volume, rebuild once and refresh the text-sorting rules:
+
+```sh
+docker compose build db && docker compose up -d --wait db
+# then, for each database (falcon, postgres, template1):
+docker compose exec db psql -U falcon -d falcon -c "ALTER EXTENSION postgis UPDATE;"   -c "REINDEX DATABASE falcon;" -c "ALTER DATABASE falcon REFRESH COLLATION VERSION;"
+```
+
+Why: the operating system library that defines how text sorts changed (glibc 2.31 → 2.36);
+PostgreSQL refuses to trust old text indexes until they are rebuilt. New installs need nothing.
+
 ## Project layout
 
 ```
