@@ -47,10 +47,13 @@ test('evidence keeps its fingerprint and shows its integrity', async ({ page }) 
 })
 
 test('a correlation explains why it exists', async ({ page }) => {
-  await page.goto(`/investigations/${CASE}/correlations/COR-004`)
+  // Numbers are given strongest first, so COR-001 is the case's strongest relationship:
+  // the same van on the rear-door camera and the gate camera.
+  await page.goto(`/investigations/${CASE}/correlations/COR-001`)
+  await expect(page.getByRole('heading', { name: 'CCTV-001 ⟷ VEH-001' })).toBeVisible()
+  await expect(page.getByLabel(/High correlation, score 0\.95/)).toBeVisible()
   await expect(page.getByText('Why this relationship exists')).toBeVisible()
   await expect(page.getByText('potential relationship, not proof')).toBeVisible()
-  await expect(page.getByText('0.95').first()).toBeVisible()
   await expectAccessible(page)
 })
 

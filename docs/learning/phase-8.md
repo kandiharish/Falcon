@@ -34,7 +34,7 @@ confirms or rejects every one.
  kept only if: a shared entity, OR at least two factors agree
 ```
 
-The real COR-004 example:
+The real example (COR-001 since Phase 12, when numbers became strongest-first; it was COR-004 before):
 
 ```
  CCTV-001 ⟷ VEH-001
@@ -115,8 +115,8 @@ review. If that refresh fails, it is logged and never breaks the action that tri
 ## 8. Try it yourself
 
 1. Sign in as `a.kumar@…`, CASE-2026-001, then **Correlations**. You will see 12, strongest first.
-2. Open **COR-004** and read each factor's `score × weight = contribution`.
+2. Open **COR-001** (the strongest) and read each factor's `score × weight = contribution`.
 3. Write a note and click **Confirm relationship**. The decision shows who reviewed it and when.
 4. Evidence **VEH-001**, then the **Correlations** tab, shows every relationship of that item.
-5. Reject entity *V001* on the Entities page. The confirmed COR-004 becomes "No longer found",
+5. Reject entity *V001* on the Entities page. A confirmed COR-001 becomes "No longer found",
    and pending ones that depended on it disappear.

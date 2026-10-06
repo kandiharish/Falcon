@@ -31,7 +31,7 @@ TASKS = [
         "evidence": ["CCTV-001", "GPS-001"],
     },
     {
-        "title": "Review COR-004: same van at the rear door and the gate",
+        "title": "Review COR-001: same van at the rear door and the gate",
         "description": (
             "High potential relationship between the CCTV clip and the plate-camera log."
         ),
