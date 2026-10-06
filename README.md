@@ -11,6 +11,7 @@ keeping the investigator in control.
 This is a learning project. The product specification is in [plan.md](plan.md);
 the full technology stack (including every AI model) is in [docs/TECH_STACK.md](docs/TECH_STACK.md);
 phase-by-phase learning notes are in [docs/learning/](docs/learning/).
+**New here? Start with [docs/HOW_TO_TEST.md](docs/HOW_TO_TEST.md)**: a step-by-step walkthrough with expected results.
 
 ## Progress
 
