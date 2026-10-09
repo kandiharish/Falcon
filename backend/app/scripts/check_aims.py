@@ -4,10 +4,13 @@
     uv run python -m app.scripts.check_aims --ai     # also asks the local AI (1-2 min)
 
 Runs against the demo case (reset_demo_data) through the real HTTP API, as real users.
-It only reads: every write it attempts is one that FALCON must refuse.
+It changes no case data: every write it attempts is one FALCON must refuse. (Drafting a
+certificate or exporting a bundle adds an audit entry, as it should.)
 Prints one line per acceptance test, grouped by aim, and exits 1 if any fails.
 """
 
+import hashlib
+import io
 import json
 import statistics
 import sys
@@ -15,6 +18,7 @@ import time
 import urllib.error
 import urllib.request
 import uuid
+import zipfile
 from collections.abc import Callable
 from http.cookiejar import CookieJar
 
@@ -86,7 +90,12 @@ def _multipart(filename: str, content: bytes, fields: dict[str, str]) -> tuple[b
 
 
 def build_checks(
-    analyst: Client, evidence_analyst: Client, admin: Client, anonymous: Client, with_ai: bool
+    analyst: Client,
+    evidence_analyst: Client,
+    admin: Client,
+    anonymous: Client,
+    officer: Client,
+    with_ai: bool,
 ) -> list[tuple[str, str, Callable[[], str]]]:
     """(aim, test case, check). A check returns what it saw, or raises AssertionError."""
 
@@ -324,9 +333,79 @@ def build_checks(
         ("6 Secure", "Browser security headers are set", security_headers),
         ("7 Fast", "Main screens answer in under 500 ms", fast_enough),
     ]
+    checks += court_checks(analyst, evidence_analyst, officer)
     if with_ai:
-        checks.append(("8 Local AI", "Plain-English search finds PH001's calls", ai_search))
+        checks.append(("9 Local AI", "Plain-English search finds PH001's calls", ai_search))
     return checks
+
+
+K = "/investigations/CASE-2026-005"  # the KPHB chain-snatching case
+
+
+def court_checks(analyst: Client, evidence_analyst: Client, officer: Client):
+    """The features that make FALCON more than a viewer, on the Telangana demo case."""
+
+    def insights():
+        return {i["key"]: i for i in analyst.get(f"{K}/insights")["items"]}
+
+    def clock_drift():
+        found = insights().get("clock_drift:CCTV-001")
+        assert found, "the shop camera's 2-minute clock error was not spotted"
+        assert found["data"]["offset_seconds"] == 117, found["data"]
+        return found["title"]
+
+    def gap_and_requests():
+        found = insights()
+        gap = next((i for i in found.values() if i["kind"] == "sighting_gap"), None)
+        owners = [i for i in found.values() if i["kind"] == "unknown_owner"]
+        assert gap and gap["letter"]["kind"] == "cctv_preservation", "no route gap found"
+        assert {i["letter"]["kind"] for i in owners} >= {"telecom_subscriber", "bank_kyc"}
+        return f"{gap['title']}; {len(owners)} owner requests suggested"
+
+    def other_case_named_only_for_members():
+        named = insights().get("other_case:V001:CASE-2026-003")
+        assert named, "a.kumar (on both teams) should see CASE-2026-003 named"
+        hidden = {i["key"] for i in evidence_analyst.get(f"{K}/insights")["items"]}
+        assert "other_case:V001:restricted" in hidden, "m.das (not on CASE-2026-003) must not"
+        assert "other_case:V001:CASE-2026-003" not in hidden
+        return "named for a member of both teams; only counted for anyone else"
+
+    def certificate():
+        sha = analyst.get(f"{K}/evidence/CCTV-001")["sha256"]
+        doc = analyst.get(f"{K}/evidence/CCTV-001/certificate")
+        values = dict(kv for section in doc["sections"] for kv in section["fields"])
+        assert values["HASH value"] == sha and "63(4)(c)" in doc["title"]
+        return f"Section 63 BSA draft, HASH {sha[:12]}…, Parts A and B left to sign"
+
+    def letter():
+        doc = analyst.get(f"{K}/letters/telecom_subscriber?entity=PH001")
+        assert "Section 94 of the Bharatiya Nagarik Suraksha Sanhita" in doc["subtitle"]
+        return "BNSS 94 request for +91 90000 01111's CAF and CDR, period from the records"
+
+    def bundle():
+        status, _, _ = analyst.call("GET", f"{K}/bundle")
+        assert status == 403, f"HTTP {status}: an analyst exported a bundle"
+        status, body, _ = officer.call("GET", f"{K}/bundle")
+        assert status == 200 and isinstance(body, bytes), f"HTTP {status}"
+        archive = zipfile.ZipFile(io.BytesIO(body))
+        sums = archive.read("SHA256SUMS.txt").decode().splitlines()
+        for line in sums:
+            digest, name = line.split("  ", 1)
+            assert hashlib.sha256(archive.read(name)).hexdigest() == digest, f"{name} differs"
+        return f"{len(sums)} originals re-verified from the ZIP alone; analysts get 403"
+
+    return [
+        ("8 Court-ready", "A camera clock error is spotted (KPHB CCTV, 2 min fast)", clock_drift),
+        ("8 Court-ready", "Route gaps and unknown owners become requests", gap_and_requests),
+        (
+            "8 Court-ready",
+            "Other cases are named only to their members",
+            other_case_named_only_for_members,
+        ),
+        ("8 Court-ready", "Section 63 certificate carries the exact hash", certificate),
+        ("8 Court-ready", "Requisition letter cites BNSS Section 94", letter),
+        ("8 Court-ready", "Court bundle verifies without FALCON", bundle),
+    ]
 
 
 def main() -> int:
@@ -336,13 +415,15 @@ def main() -> int:
         return 1
     secret = password.get_secret_value()
     analyst, evidence_analyst, admin, anonymous = Client(), Client(), Client(), Client()
+    officer = Client()
     analyst.sign_in("a.kumar@falcon.example", secret)
     evidence_analyst.sign_in("m.das@falcon.example", secret)
     admin.sign_in("admin@falcon.example", secret)
+    officer.sign_in("r.varma@falcon.example", secret)
 
     failed = 0
     aim = ""
-    checks = build_checks(analyst, evidence_analyst, admin, anonymous, "--ai" in sys.argv)
+    checks = build_checks(analyst, evidence_analyst, admin, anonymous, officer, "--ai" in sys.argv)
     for number, (group, title, check) in enumerate(checks, start=1):
         if group != aim:
             aim = group
@@ -355,7 +436,7 @@ def main() -> int:
             failed += 1
         print(f"  AT-{number:02d} {mark}  {title}\n               {outcome}")
 
-    for client in (analyst, evidence_analyst, admin):
+    for client in (analyst, evidence_analyst, admin, officer):
         client.call("POST", "/auth/logout")
     print(f"\n{len(checks) - failed} of {len(checks)} acceptance tests passed.")
     return 1 if failed else 0

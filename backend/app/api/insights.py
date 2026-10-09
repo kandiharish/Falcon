@@ -29,6 +29,7 @@ class InsightOut(BaseModel):
     evidence: list[str]
     entities: list[str]
     letter: dict[str, Any] | None
+    data: dict[str, Any]
 
 
 class InsightsOut(BaseModel):

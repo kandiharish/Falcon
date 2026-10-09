@@ -49,6 +49,7 @@ Legend: ✅ in use now · 🔜 planned (phase)
 | leaflet.markercluster | 1.5 | ✅ P7 | Groups nearby points into numbered bubbles | Keeps maps readable with many events. |
 | Intl API (built into browsers) | — | ✅ P7 | Time zones: show/read times in the case's zone | No date library needed (moment / date-fns not required). |
 | tzdata (Python) | — | ✅ P7 | IANA time-zone database for the backend | Windows has no system zone database. |
+| qrcode (npm) | 1.5 | ✅ P13 | QR codes on printable evidence labels | MIT, generates SVG locally (no web service sees the evidence URL). |
 | Cytoscape.js + cytoscape-fcose | 3.34 / 2.2 | ✅ P9 | Relationship graph on a canvas; fCoSE force-directed layout | Built for network analysis (layouts, shortest path, centrality); MIT. React Flow is for flowcharts; D3 means building everything. Used directly (no unmaintained React wrapper), lazy-loaded (~178 kB gzip). |
 
 ## 2. Backend
@@ -106,11 +107,14 @@ AI **suggests**, humans **decide**. Every AI output is labelled (Extracted / Det
 | Photo metadata (GPS, time, camera) | **Pillow** EXIF reader | Parser (no ML) | — | ✅ P5 | Facts, not guesses → labelled *Extracted*; camera time-zone offset honoured. |
 | Video metadata | **PyAV** (FFmpeg bundled in the wheel) | Parser (no ML) | — | ✅ P6 | *Replaced ffprobe:* nothing to install. Duration, codec, resolution, creation time. |
 | Names, places, organisations in text | **spaCy 3.8 `en_core_web_sm` 3.8.0** | Named-entity recognition model | ~12 MB | ✅ P6 | Small, fast on CPU. Results are DETECTED (≤0.6 confidence) and filtered: names must be capitalised. Upgradeable to `en_core_web_trf`. |
+| Telangana places and Indian law codes | **FALCON gazetteer** (spaCy EntityRuler, checked before the model) | Word lists (no ML) | — | ✅ P13 | The small English model read "JNTU" as a person and "BNS" as a company. Known places become locations (0.7); law codes are never entities. |
 | Phone numbers, emails, plates, account IDs | **`phonenumbers`** (port of Google libphonenumber) + patterns | Rules (no ML) | — | ✅ P6 | Explainable; numbers normalised to E.164 so the same phone in two files becomes one entity. |
 | Structured records (calls, GPS, transactions, plates) | **FALCON CSV extractors** with column aliases | Rules (no ML) | — | ✅ P6 | Rows become EXTRACTED entities and events (0.95; 0.8 when a time has no zone). |
 | Text similarity, meaning-based search | **`all-minilm`** (= all-MiniLM-L6-v2) served by **Ollama** | Embedding model (384-dim vectors) | 46 MB | ✅ P10 | *Changed:* served by Ollama instead of sentence-transformers, so no 2 GB PyTorch install; one AI runtime for everything. ~0.2 s per search on CPU. |
 | Near-duplicate images | **Own dHash** (difference hash, ~15 lines with Pillow) | Algorithm (no ML) | — | ✅ P10 | *Changed:* `imagehash` needs SciPy (~40 MB); dHash is enough to catch resized/re-saved copies (≤ 10 of 64 bits differ). |
 | Natural-language search, Investigation Assistant agent | **Qwen3 8B** (`qwen3:8b`) via **Ollama 0.35** | Large language model: tool calling + JSON-schema output | 5.2 GB (4-bit) | ✅ P10 | Measured on this laptop (CPU only): search ~8 s warm; agent 1–3 min per answer, all citations verified. `qwen3:4b` was tested and rejected: it ignored the answer rules as an agent. Thinking mode off; replies capped at 700 tokens. |
+| Insights: clock drift, route gaps, unknown owners, other cases | **FALCON insights engine** (our own Python rules) | Deterministic rules, no ML | — | ✅ P13 | Each suggestion names its records and the request that would answer it. Other cases are named only to their members (hit / no-hit). |
+| Section 63 certificates, BNSS 94 letters, court bundle | **FALCON documents** (templates filled from the record) | Templates, no ML | — | ✅ P13 | Drafts only: the officer checks and signs. The bundle re-hashes every original and ships `SHA256SUMS.txt`. |
 | Correlation scoring | **FALCON correlation engine** (our own Python rules) | Deterministic scoring, no ML | — | ✅ P8 | Same input → same output; every score explained factor by factor. Entity 0.45 · time 0.30 (30 min) · place 0.25 (500 m, haversine). |
 
 **Deliberately not used:** face recognition (ethically risky, biased, plan §52) and any cloud AI

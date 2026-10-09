@@ -1,4 +1,5 @@
-import { Link, useParams } from 'react-router'
+import { useEffect, useRef } from 'react'
+import { Link, useParams, useSearchParams } from 'react-router'
 import {
   ArrowLeft,
   BadgeCheck,
@@ -7,7 +8,9 @@ import {
   FileQuestion,
   Fingerprint,
   History,
+  QrCode,
   RefreshCw,
+  Scale,
   ShieldAlert,
   ShieldCheck,
 } from 'lucide-react'
@@ -156,6 +159,23 @@ function Actions({ evidence, caseRef }: { evidence: Evidence; caseRef: string })
       onError: (err) => toast.error('Action failed', { description: err instanceof ApiError ? err.message : undefined }),
     })
 
+  // Arriving from a scanned evidence label (?verify=1): re-check the stored file once, so the
+  // person holding the sealed packet knows at once whether the record is intact.
+  const [search, setSearch] = useSearchParams()
+  const scanned = useRef(false)
+  const { mutate: verify } = action
+  useEffect(() => {
+    if (search.get('verify') !== '1' || scanned.current) return
+    scanned.current = true
+    setSearch({}, { replace: true })
+    verify({ kind: 'verify-integrity' }, {
+      onSuccess: (e) =>
+        e.integrityOk
+          ? toast.success(`Label scanned: ${e.reference} matches its fingerprint`)
+          : toast.error(`Label scanned: ${e.reference} does NOT match its fingerprint`),
+    })
+  }, [search, setSearch, verify])
+
   return (
     <div className="flex flex-wrap gap-2">
       <Button asChild variant="outline">
@@ -164,6 +184,16 @@ function Actions({ evidence, caseRef }: { evidence: Evidence; caseRef: string })
           <Download /> Original
         </a>
       </Button>
+      {onTeam && (
+        <>
+          <Button asChild variant="outline">
+            <Link to={`/investigations/${caseRef}/evidence/${evidence.reference}/certificate`}><Scale /> Section 63 certificate</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to={`/investigations/${caseRef}/labels?evidence=${evidence.reference}`}><QrCode /> Label</Link>
+          </Button>
+        </>
+      )}
       {failed && can(user, 'evidence:upload') && onTeam && (
         <Button variant="outline" disabled={action.isPending} onClick={() => run({ kind: 'reprocess' }, 'Processing restarted')}>
           <RefreshCw /> Reprocess

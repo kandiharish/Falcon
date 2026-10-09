@@ -84,6 +84,35 @@ test('tasks and global search', async ({ page }) => {
   await expect(page.getByRole('option', { name: /PH001/ })).toBeVisible()
 })
 
+const KPHB = 'CASE-2026-005' // the Telangana chain-snatching demo case
+
+test('the case page suggests what to check next', async ({ page }) => {
+  await page.goto(`/investigations/${KPHB}`)
+  await expect(page.getByText('FALCON suggests')).toBeVisible()
+  // The shop camera's clock is 2 minutes fast; FALCON spots it from the ANPR camera.
+  await expect(page.getByText("CCTV-001's clock appears to run 1 min 57 s fast (ahead)")).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Draft CCTV request' })).toBeVisible()
+  await expectAccessible(page)
+})
+
+test('a Section 63 certificate is drafted with the evidence hash', async ({ page }) => {
+  await page.goto(`/investigations/${KPHB}/evidence/CCTV-001/certificate`)
+  await expect(page.getByRole('heading', { name: /SECTION 63\(4\)\(c\) OF THE BHARATIYA SAKSHYA ADHINIYAM/ })).toBeVisible()
+  await expect(page.getByRole('row', { name: /HASH value [0-9a-f]{64}/ })).toBeVisible()
+  await expectAccessible(page)
+})
+
+test('the incident replays on a clock, with the camera clock corrected', async ({ page }) => {
+  await page.goto(`/investigations/${KPHB}`) // opening a case makes it the current one
+  await expect(page.getByRole('heading', { name: 'KPHB Colony Chain Snatching' })).toBeVisible()
+  await page.goto('/timeline?view=replay')
+  await expect(page.getByText(/Correct known camera clock errors/)).toBeVisible()
+  await page.getByRole('button', { name: '15 min / s' }).click()
+  await page.getByRole('button', { name: 'Play' }).click()
+  await expect(page.getByText(/^(?!0 )\d+ of \d+ records/)).toBeVisible()
+  await expect(page.getByText('clock corrected by 117 s').first()).toBeVisible({ timeout: 15_000 })
+})
+
 test.describe('a separate sign-in', () => {
   test.use({ storageState: { cookies: [], origins: [] } }) // not the shared session
 

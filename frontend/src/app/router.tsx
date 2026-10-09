@@ -134,6 +134,27 @@ export const router = createBrowserRouter([
             },
           },
           {
+            path: 'investigations/:reference/evidence/:evidenceRef/certificate',
+            lazy: async () => {
+              const { CertificatePage } = await import('@/features/documents/DocumentPages')
+              return { Component: () => guard(navItem('evidence'), <CertificatePage />) }
+            },
+          },
+          {
+            path: 'investigations/:reference/letters/:kind',
+            lazy: async () => {
+              const { LetterPage } = await import('@/features/documents/DocumentPages')
+              return { Component: () => guard(navItem('evidence'), <LetterPage />) }
+            },
+          },
+          {
+            path: 'investigations/:reference/labels',
+            lazy: async () => {
+              const { LabelsPage } = await import('@/features/documents/LabelsPage')
+              return { Component: () => guard(navItem('evidence'), <LabelsPage />) }
+            },
+          },
+          {
             path: 'investigations/:reference/correlations/:correlationRef',
             lazy: async () => {
               const { CorrelationDetailPage } = await import('@/features/correlations/CorrelationDetailPage')

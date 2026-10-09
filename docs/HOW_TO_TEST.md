@@ -77,17 +77,17 @@ Break-in** in the top bar.
 
 | Tile | Value | Meaning |
 |---|---|---|
-| Active investigations | 2 | Cases A. Kumar works on that are active |
-| Evidence items | 8 | Files in those cases |
-| Being processed | 0 | The worker has finished |
-| Entities identified | 12 | People, phones, vehicles… |
-| Events identified | 19 | Things that happened |
-| Potential relationships | 12 | Correlations |
-| Requires review | 43 | Items no human has checked yet |
+| Active cases | 3 | Cases A. Kumar works on that are active |
+| Evidence items | 17 | Files in those cases |
+| Processing | 0 | The worker has finished |
+| Entities | 31 | People, phones, vehicles… |
+| Events | 43 | Things that happened |
+| Relationships | 25 | Correlations |
+| To review | 99 | Items no human has checked yet |
 | Open tasks | 4 | Team work not finished |
 
-"Needs attention" lists **overdue tasks** (the demo's due dates are fixed at 1–6 Oct 2026, so
-how many are overdue depends on today's date).
+"Needs attention" shows **one overdue task** (T-004). The demo's due dates are set relative to
+the day you reset the demo, so it never looks stale.
 
 **How it works:** every number is a live `COUNT` in the database, over only the cases you are
 on a team for. Another officer would see different numbers.
@@ -219,6 +219,22 @@ black-on-white page.
 | Wrong password 5 times for **a.menon** | Account locked for 15 minutes (admin can unlock: Administration → ⋯ → Unlock) |
 | More than 10 sign-in attempts in a minute | "Too many attempts. Wait N seconds" |
 | Your name → **Account security → Set up** | A QR code for any authenticator app; after that, sign-in needs a 6-digit code |
+
+## 3b. The Telangana case: CASE-2026-005 KPHB Colony Chain Snatching
+
+A 62-year-old woman's gold chain is snatched by two men on a black motorcycle (TG 09 ZZ 0001)
+in KPHB Colony, Kukatpally. People, numbers (+91 90000 0xxxx), UPI IDs and the plate are fictional.
+Sign in as **r.varma** and open the case from Investigations.
+
+| Try this | Expected |
+|---|---|
+| The case page | **FALCON suggests**: the bike also appears in CASE-2026-003 (reported stolen); *CCTV-001's clock appears to run 1 min 57 s fast*; the bike is unseen for 1 h 1 min; *Who uses +91 90000 01111?*; and requests for the UPI account and the IMEI |
+| Draft operator request / Draft CCTV request | A requisition under **BNSS Section 94**, pre-filled with the case, number and period. Print it |
+| Court pack → a certificate chip (e.g. CCTV-001) | A draft **Section 63 BSA 2023 certificate** (Parts A and B) with the file's SHA-256 |
+| Court pack → Court bundle (.zip) | A ZIP. Unzip it and run `sha256sum -c SHA256SUMS.txt` (Git Bash): every original reports **OK** |
+| Court pack → Evidence labels | QR labels for the property room. Opening a label's link re-checks the file: *"Label scanned: CCTV-001 matches its fingerprint"* |
+| Replay the incident → Play | A clock runs; the bike and phone move across Hyderabad. With *Correct known camera clock errors* ticked, CCTV-001's sighting lands at 19:42:15, the same second as the community camera |
+| Sign in as **m.das** and open the case page | The other-case alert says *appears in 1 other investigation you cannot open*: no case name (hit / no-hit) |
 
 ## 4. The automated checks
 ```powershell

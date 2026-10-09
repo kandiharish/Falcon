@@ -100,6 +100,8 @@ class Insight:
     entities: list[str] = field(default_factory=list)
     # A requisition letter that would get the missing evidence: kind + what to fill it with.
     letter: dict[str, Any] | None = None
+    # Numbers behind the finding, for screens that use them (e.g. replay with a clock fixed).
+    data: dict[str, Any] = field(default_factory=dict)
 
 
 def analyse(facts: CaseFacts) -> list[Insight]:
@@ -208,6 +210,7 @@ def _clock_drift(facts: CaseFacts) -> list[Insight]:
                 ),
                 evidence=[evidence, other.evidence_reference],
                 entities=[thing.reference],
+                data={"evidence": evidence, "offset_seconds": round(offset)},
             )
         )
     return insights
@@ -271,7 +274,7 @@ def _sighting_gaps(facts: CaseFacts) -> list[Insight]:
                     "Ask shops, apartments and the municipality for CCTV between these two points "
                     "for this time window. Most recorders overwrite footage within 15–30 days."
                 ),
-                evidence=[before.evidence_reference, after.evidence_reference],
+                evidence=sorted({before.evidence_reference, after.evidence_reference}),
                 entities=[vehicle.reference],
                 letter={
                     "kind": "cctv_preservation",

@@ -45,6 +45,7 @@ import { allowedTransitions, investigationStatusTerms, transitionLabels } from '
 import { formatDateTime } from '@/lib/format'
 import { allTimeZones, zoneLabel } from '@/lib/time'
 import { ActivityTab } from './ActivityTab'
+import { CourtPackCard, KeyLeadsCard, ReplayCard, SuggestionsCard } from './CaseCommandCenter'
 import { TeamTab } from './TeamTab'
 
 /** Investigation details (plan §10, §55): the case's home page. */
@@ -207,7 +208,9 @@ function TimeZoneField({ investigation }: { investigation: Investigation }) {
         <SelectValue />
       </SelectTrigger>
       <SelectContent className="max-h-72">
-        {allTimeZones().map((zone) => (
+        {/* Browsers list some zones under older names (Chromium: Asia/Calcutta for Asia/Kolkata):
+            always offer the case's own zone so the picker never shows blank. */}
+        {[...new Set([investigation.timeZone, ...allTimeZones()])].map((zone) => (
           <SelectItem key={zone} value={zone}>{zoneLabel(zone)}</SelectItem>
         ))}
       </SelectContent>
@@ -225,81 +228,89 @@ function OverviewTab({ investigation }: { investigation: Investigation }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
-      <Card className="lg:col-span-2">
-        <CardHeader>
-          <CardTitle>Case summary</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <p className="text-sm whitespace-pre-line">
-            {investigation.description || <span className="text-muted-foreground">No description yet.</span>}
-          </p>
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
-            <Detail label="Case type">{investigation.caseType}</Detail>
-            <Detail label="Lead investigator">{investigation.leadInvestigator.displayName}</Detail>
-            <Detail label="Your role">
-              {investigation.myRoleInCase === 'lead'
-                ? 'Lead investigator'
-                : investigation.myRoleInCase === 'member'
-                  ? 'Team member'
-                  : 'Supervisor oversight'}
-            </Detail>
-            <Detail label="Location">
-              {investigation.location ? (
-                <span className="inline-flex items-center gap-1">
-                  <MapPin aria-hidden className="size-3.5 text-muted-foreground" />
-                  {investigation.location}
-                </span>
-              ) : (
-                '—'
-              )}
-            </Detail>
-            <Detail label="Time zone">
-              <TimeZoneField investigation={investigation} />
-            </Detail>
-            <Detail label="Created">{formatDateTime(investigation.createdAt)}</Detail>
-            <Detail label="Last updated">{formatDateTime(investigation.updatedAt)}</Detail>
-          </dl>
-          {investigation.tags.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5">
-              <Tag aria-hidden className="size-3.5 text-muted-foreground" />
-              {investigation.tags.map((tag) => (
-                <span key={tag} className="rounded-md bg-muted px-1.5 py-0.5 text-xs">{tag}</span>
-              ))}
+      <div className="space-y-6 lg:col-span-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Case summary</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <p className="text-sm whitespace-pre-line">
+              {investigation.description || <span className="text-muted-foreground">No description yet.</span>}
+            </p>
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
+              <Detail label="Case type">{investigation.caseType}</Detail>
+              <Detail label="Lead investigator">{investigation.leadInvestigator.displayName}</Detail>
+              <Detail label="Your role">
+                {investigation.myRoleInCase === 'lead'
+                  ? 'Lead investigator'
+                  : investigation.myRoleInCase === 'member'
+                    ? 'Team member'
+                    : 'Supervisor oversight'}
+              </Detail>
+              <Detail label="Location">
+                {investigation.location ? (
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin aria-hidden className="size-3.5 text-muted-foreground" />
+                    {investigation.location}
+                  </span>
+                ) : (
+                  '—'
+                )}
+              </Detail>
+              <Detail label="Time zone">
+                <TimeZoneField investigation={investigation} />
+              </Detail>
+              <Detail label="Created">{formatDateTime(investigation.createdAt)}</Detail>
+              <Detail label="Last updated">{formatDateTime(investigation.updatedAt)}</Detail>
+            </dl>
+            {investigation.tags.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Tag aria-hidden className="size-3.5 text-muted-foreground" />
+                {investigation.tags.map((tag) => (
+                  <span key={tag} className="rounded-md bg-muted px-1.5 py-0.5 text-xs">{tag}</span>
+                ))}
+              </div>
+            )}
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground">Workflow</p>
+              <WorkflowStepper stage={investigation.stage} className="flex-wrap" />
             </div>
-          )}
-          <div className="space-y-2">
-            <p className="text-xs font-medium text-muted-foreground">Workflow</p>
-            <WorkflowStepper stage={investigation.stage} className="flex-wrap" />
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Case contents</CardTitle>
-          <CardDescription>Filled as evidence is added and analysed.</CardDescription>
-          <CardAction>
-            <Button asChild variant="outline" size="sm">
-              <Link to="/evidence">Open evidence</Link>
-            </Button>
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          <ul className="divide-y text-sm">
-            {counts.map(({ label, value, icon: Icon, phase }) => (
-              <li key={label} className="flex items-center justify-between gap-3 py-2.5">
-                <span className="flex items-center gap-2 text-muted-foreground">
-                  <Icon aria-hidden className="size-4" /> {label}
-                </span>
-                <span className="text-right">
-                  <span className="font-mono tabular-nums">{value}</span>
-                  {value === 0 && <span className="block text-[0.7rem] text-muted-foreground">Phase {phase}</span>}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
+        <SuggestionsCard investigation={investigation} />
+      </div>
+      <div className="space-y-6">
+        <KeyLeadsCard investigation={investigation} />
+        <ReplayCard />
+        <CourtPackCard investigation={investigation} />
+        <Card>
+          <CardHeader>
+            <CardTitle>Case contents</CardTitle>
+            <CardDescription>Filled as evidence is added and analysed.</CardDescription>
+            <CardAction>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/evidence">Open evidence</Link>
+              </Button>
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            <ul className="divide-y text-sm">
+              {counts.map(({ label, value, icon: Icon, phase }) => (
+                <li key={label} className="flex items-center justify-between gap-3 py-2.5">
+                  <span className="flex items-center gap-2 text-muted-foreground">
+                    <Icon aria-hidden className="size-4" /> {label}
+                  </span>
+                  <span className="text-right">
+                    <span className="font-mono tabular-nums">{value}</span>
+                    {value === 0 && <span className="block text-[0.7rem] text-muted-foreground">Phase {phase}</span>}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

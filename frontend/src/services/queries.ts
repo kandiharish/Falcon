@@ -16,6 +16,7 @@ import { GraphService, type GraphQuery } from './graphService'
 import { AIService } from './aiService'
 import { WorkService, type TaskInput } from './workService'
 import { ReportService, type NewReport } from './reportService'
+import { DocumentsService, type LetterKind } from './documentsService'
 import { ApiError, apiGet } from './apiClient'
 import { AuthService, type LoginInput } from './authService'
 import { EvidenceService, isProcessing, type EvidenceQuery, type NewEvidence } from './evidenceService'
@@ -382,6 +383,29 @@ export const useMarkNotificationsRead = () =>
   useMutation({
     mutationFn: (id: string | null) => (id ? WorkService.markRead(id) : WorkService.markAllRead()),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+  })
+
+// ---------- Insights and court documents --------------------------------------------------
+
+export const useInsights = (caseRef: string | null) =>
+  useQuery({
+    queryKey: ['insights', caseRef ?? 'none'],
+    queryFn: () => DocumentsService.insights(caseRef as string),
+    enabled: caseRef !== null,
+  })
+
+export const useCertificate = (caseRef: string, evidenceRef: string) =>
+  useQuery({
+    queryKey: ['documents', caseRef, 'certificate', evidenceRef],
+    queryFn: () => DocumentsService.certificate(caseRef, evidenceRef),
+    staleTime: Infinity, // drafting is audited: don't re-draft on every window focus
+  })
+
+export const useLetter = (caseRef: string, kind: LetterKind, query: string) =>
+  useQuery({
+    queryKey: ['documents', caseRef, kind, query],
+    queryFn: () => DocumentsService.letter(caseRef, kind, query),
+    staleTime: Infinity,
   })
 
 // ---------- Reports -----------------------------------------------------------------------

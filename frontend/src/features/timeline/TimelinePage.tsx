@@ -1,6 +1,6 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { ChartGantt, FileStack, FolderSearch, Map as MapIcon } from 'lucide-react'
+import { ChartGantt, FileStack, FolderSearch, Map as MapIcon, Play } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -30,9 +30,11 @@ import { TimelineChart, type Lane } from './TimelineChart'
 
 // The map pulls in Leaflet (~150 kB); load it only when someone opens the Map view.
 const EventMap = lazy(() => import('./EventMap').then((m) => ({ default: m.EventMap })))
+const ReplayView = lazy(() => import('./ReplayView').then((m) => ({ default: m.ReplayView })))
 
 const ALL = 'all'
 type GroupBy = 'source' | 'category' | 'entity'
+type View = 'timeline' | 'map' | 'replay'
 
 /**
  * Timeline & map (plan §17, §54): TIME → EVENT → ENTITY → LOCATION → EVIDENCE.
@@ -42,11 +44,12 @@ export function TimelinePage() {
   const caseRef = useCurrentCase()
   const timeZone = useCaseTimeZone(caseRef)
   const { canReview } = useCaseAccess(caseRef)
-  const [view, setView] = useState<'timeline' | 'map'>('timeline')
+  // ?view=replay (from the case page) opens the replay directly.
+  const [searchParams] = useSearchParams()
+  const [view, setView] = useState<View>(() => (searchParams.get('view') as View | null) ?? 'timeline')
   const [groupBy, setGroupBy] = useState<GroupBy>('source')
   const [category, setCategory] = useState<Category | typeof ALL>(ALL)
   // ?entity=V001 (from the graph or an entity profile) opens the timeline filtered to it.
-  const [searchParams] = useSearchParams()
   const [entity, setEntity] = useState<string>(() => searchParams.get('entity') ?? ALL)
   const [evidenceType, setEvidenceType] = useState<string>(ALL)
   const [showRejected, setShowRejected] = useState(false)
@@ -81,10 +84,11 @@ export function TimelinePage() {
         title="Timeline"
         description={`What happened, when and where — every point links to its evidence. Times in ${zoneLabel(timeZone)}.`}
         actions={
-          <Tabs value={view} onValueChange={(v) => setView(v as 'timeline' | 'map')}>
+          <Tabs value={view} onValueChange={(v) => setView(v as View)}>
             <TabsList>
               <TabsTrigger value="timeline"><ChartGantt /> Timeline</TabsTrigger>
               <TabsTrigger value="map"><MapIcon /> Map</TabsTrigger>
+              <TabsTrigger value="replay"><Play /> Replay</TabsTrigger>
             </TabsList>
           </Tabs>
         }
@@ -153,6 +157,10 @@ export function TimelinePage() {
           selected={selected?.reference ?? null}
           onSelect={setSelected}
         />
+      ) : view === 'replay' ? (
+        <Suspense fallback={<Skeleton className="h-[60svh] w-full" />}>
+          <ReplayView caseRef={caseRef} events={events} timeZone={timeZone} onSelect={setSelected} />
+        </Suspense>
       ) : (
         <Suspense fallback={<Skeleton className="h-[60svh] w-full" />}>
           <EventMap events={events} timeZone={timeZone} pathEntity={entity === ALL ? null : entity} onSelect={setSelected} />

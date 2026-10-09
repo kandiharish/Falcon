@@ -31,6 +31,7 @@ def test_a_camera_clock_running_fast_is_spotted_and_explained():
     assert "19:42:15" in drift.detail and "19:44:12" in drift.detail  # case-local times
     assert drift.evidence == ["CCTV-001", "VEH-001"] and drift.entities == ["V001"]
     assert "does not change the times" in drift.action
+    assert drift.data == {"evidence": "CCTV-001", "offset_seconds": 117}
 
 
 def test_small_differences_far_places_and_two_network_clocks_are_not_drift():

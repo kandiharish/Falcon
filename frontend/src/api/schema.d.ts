@@ -1017,6 +1017,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/investigations/{case_reference}/insights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Insights */
+        get: operations["insights_api_investigations__case_reference__insights_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/evidence/{evidence_reference}/certificate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Section 63 Certificate */
+        get: operations["section_63_certificate_api_investigations__case_reference__evidence__evidence_reference__certificate_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/letters/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Requisition Letter */
+        get: operations["requisition_letter_api_investigations__case_reference__letters__kind__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/investigations/{case_reference}/bundle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Court Bundle */
+        get: operations["court_bundle_api_investigations__case_reference__bundle_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1367,6 +1435,23 @@ export interface components {
             password: string;
             /** Code */
             code: string;
+        };
+        /** DocumentOut */
+        DocumentOut: {
+            /** Kind */
+            kind: string;
+            /** Title */
+            title: string;
+            /** Subtitle */
+            subtitle: string;
+            /** Reference */
+            reference: string;
+            /** Notice */
+            notice: string;
+            /** Sections */
+            sections: components["schemas"]["SectionOut"][];
+            /** To Check */
+            to_check: string[];
         };
         /** EdgeOut */
         EdgeOut: {
@@ -1750,6 +1835,51 @@ export interface components {
             /** Status */
             status: string;
             database: components["schemas"]["DatabaseHealth"];
+        };
+        /** InsightOut */
+        InsightOut: {
+            /** Key */
+            key: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "other_case" | "clock_drift" | "waiting_lead" | "sighting_gap" | "unknown_owner";
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "high" | "medium" | "info";
+            /** Title */
+            title: string;
+            /** Detail */
+            detail: string;
+            /** Action */
+            action: string;
+            /** Evidence */
+            evidence: string[];
+            /** Entities */
+            entities: string[];
+            /** Letter */
+            letter: {
+                [key: string]: unknown;
+            } | null;
+            /** Data */
+            data: {
+                [key: string]: unknown;
+            };
+        };
+        /** InsightsOut */
+        InsightsOut: {
+            /** Items */
+            items: components["schemas"]["InsightOut"][];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Note */
+            note: string;
         };
         /**
          * InvestigationCounts
@@ -2343,6 +2473,22 @@ export interface components {
              * @description topic words to look for in documents
              */
             text?: string | null;
+        };
+        /** SectionOut */
+        SectionOut: {
+            /** Heading */
+            heading: string;
+            /** Paragraphs */
+            paragraphs: string[];
+            /** Fields */
+            fields: [
+                string,
+                string
+            ][];
+            /** Items */
+            items: string[];
+            /** Signatures */
+            signatures: string[];
         };
         /** SessionOut */
         SessionOut: {
@@ -4700,6 +4846,137 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SearchHit"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    insights_api_investigations__case_reference__insights_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    section_63_certificate_api_investigations__case_reference__evidence__evidence_reference__certificate_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+                evidence_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    requisition_letter_api_investigations__case_reference__letters__kind__get: {
+        parameters: {
+            query: {
+                entity: string;
+                from?: string | null;
+                to?: string | null;
+                place?: string[] | null;
+            };
+            header?: never;
+            path: {
+                case_reference: string;
+                kind: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    court_bundle_api_investigations__case_reference__bundle_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

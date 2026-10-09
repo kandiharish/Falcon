@@ -232,6 +232,8 @@ export const auditActionLabels: Record<string, string> = {
   'task.updated': 'Updated a task',
   'report.generated': 'Generated a report',
   'report.exported': 'Exported a report',
+  'document.drafted': 'Drafted a certificate or letter',
+  'bundle.exported': 'Exported the court bundle',
   'ai.search': 'Searched in plain words (AI)',
   'ai.index_rebuilt': 'Rebuilt the AI index',
   'assistant.question': 'Asked the assistant',
