@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { ArrowRight, FolderSearch, Settings } from 'lucide-react'
 import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
@@ -56,13 +57,25 @@ export function OverviewPage() {
   return <CommandCenter currentId={currentId} />
 }
 
+function greetingNow() {
+  const now = new Date()
+  const hour = now.getHours()
+  return {
+    greeting: hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening',
+    date: now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+  }
+}
+
 function CommandCenter({ currentId }: { currentId: string | null }) {
   const { data, isPending, isError, refetch, isFetching } = useDashboard(true)
+  const { data: user } = useCurrentUser()
+  const [today] = useState(greetingNow) // read the clock once, not on every render
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHeader
+        eyebrow={<span className="text-xs text-muted-foreground">{today.greeting}{user ? `, ${user.displayName}` : ''} · {today.date}</span>}
         title="Command center"
-        description="Across the investigations you work on: what is happening, what needs review, and what is assigned to you. All case data is fictional demonstration data."
+        description="Across the investigations you work on: what is happening, what needs review, and what is assigned to you."
       />
       {isError ? (
         <ErrorState description="The dashboard could not be loaded." onRetry={() => refetch()} retrying={isFetching} />
@@ -72,10 +85,23 @@ function CommandCenter({ currentId }: { currentId: string | null }) {
         <>
           <MetricTiles metrics={data.metrics} />
           <div className="grid gap-6 lg:grid-cols-3">
-            <CurrentInvestigationCard id={currentId} className="lg:col-span-2" />
+            <Panel className="lg:col-span-2" title="Leads waiting for review"
+              description="Potential relationships no one has judged yet, strongest first. Each one says why it exists."
+              action={<Button asChild variant="outline" size="sm"><Link to="/correlations">All correlations <ArrowRight /></Link></Button>}>
+              <PendingReviews items={data.pending_correlations} />
+              {Object.keys(data.correlations_by_level).length > 0 && (
+                <div className="mt-4 border-t pt-3">
+                  <BarList tone="signal" empty="" items={['high', 'medium', 'low'].filter((l) => data.correlations_by_level[l]).map((l) => ({ label: `${l[0].toUpperCase()}${l.slice(1)}`, value: data.correlations_by_level[l] }))} />
+                </div>
+              )}
+            </Panel>
             <Panel title="Needs attention" description="Failures, integrity problems and overdue tasks.">
               <AlertsList alerts={data.alerts} />
             </Panel>
+          </div>
+          <div className="grid gap-6 lg:grid-cols-3">
+            <CurrentInvestigationCard id={currentId} className="lg:col-span-2" />
+            <Panel title="Assigned to you"><MyTasks items={data.my_tasks} /></Panel>
           </div>
           <div className="grid gap-6 lg:grid-cols-3">
             <Panel className="lg:col-span-2" title="Event activity"
@@ -93,20 +119,11 @@ function CommandCenter({ currentId }: { currentId: string | null }) {
             </Panel>
           </div>
           <div className="grid gap-6 lg:grid-cols-3">
-            <Panel title="Pending reviews" description="Potential relationships, strongest first.">
-              <PendingReviews items={data.pending_correlations} />
-              {Object.keys(data.correlations_by_level).length > 0 && (
-                <div className="mt-4 border-t pt-3">
-                  <BarList tone="signal" empty="" items={['high', 'medium', 'low'].filter((l) => data.correlations_by_level[l]).map((l) => ({ label: `${l[0].toUpperCase()}${l.slice(1)}`, value: data.correlations_by_level[l] }))} />
-                </div>
-              )}
-            </Panel>
-            <Panel title="Assigned to you"><MyTasks items={data.my_tasks} /></Panel>
-            <Panel title="Recent evidence"><RecentEvidence items={data.recent_evidence} /></Panel>
-          </div>
-          <div className="grid gap-6 lg:grid-cols-3">
             <InvestigationsTable className="lg:col-span-2" />
-            <Panel title="Investigation activity" description="Recorded actions, from the audit log."><ActivityFeed entries={data.activity} days={data.activity_by_day} /></Panel>
+            <div className="space-y-6">
+              <Panel title="Recent evidence"><RecentEvidence items={data.recent_evidence} /></Panel>
+              <Panel title="Investigation activity" description="Recorded actions, from the audit log."><ActivityFeed entries={data.activity} days={data.activity_by_day} /></Panel>
+            </div>
           </div>
         </>
       )}

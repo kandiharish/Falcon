@@ -1,3 +1,4 @@
+import { formatDay } from '@/lib/format'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { CalendarClock, FolderSearch, ListChecks, Plus, UserRound } from 'lucide-react'
@@ -147,7 +148,7 @@ function TaskCard({ task, showCase, canManage, onOpen }: { task: Task; showCase:
           <span className="inline-flex items-center gap-1"><UserRound aria-hidden className="size-3.5" />{task.assignee?.displayName ?? 'Unassigned'}</span>
           {task.dueDate && (
             <span className={cn('inline-flex items-center gap-1', overdue && 'font-medium text-destructive')}>
-              <CalendarClock aria-hidden className="size-3.5" />{overdue ? 'Overdue · ' : 'Due '}{task.dueDate}
+              <CalendarClock aria-hidden className="size-3.5" />{overdue ? 'Overdue · ' : 'Due '}{formatDay(task.dueDate)}
             </span>
           )}
         </div>

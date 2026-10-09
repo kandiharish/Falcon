@@ -23,37 +23,43 @@ import type { EvidenceStatus } from '@/domain/types'
 import { StatusBadge } from '@/design-system/badges'
 import { toneFillClass, type Tone } from '@/design-system/tones'
 import { auditActionLabels } from '@/design-system/vocabulary'
-import { timeAgo } from '@/lib/format'
+import { formatDay, timeAgo } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useInvestigationContext } from '@/app/investigation-context'
 
 type Data = DashboardDto
 
 const METRICS: { key: string; label: string; icon: LucideIcon; to: string; tone?: Tone }[] = [
-  { key: 'active_investigations', label: 'Active investigations', icon: FolderSearch, to: '/investigations' },
+  { key: 'active_investigations', label: 'Active cases', icon: FolderSearch, to: '/investigations' },
   { key: 'evidence_items', label: 'Evidence items', icon: FileStack, to: '/evidence' },
-  { key: 'evidence_processing', label: 'Being processed', icon: Loader, to: '/evidence' },
-  { key: 'entities', label: 'Entities identified', icon: UserRoundSearch, to: '/entities' },
-  { key: 'events', label: 'Events identified', icon: Activity, to: '/events' },
-  { key: 'correlations', label: 'Potential relationships', icon: Waypoints, to: '/correlations' },
-  { key: 'requires_review', label: 'Requires review', icon: ScanSearch, to: '/correlations', tone: 'warning' },
+  { key: 'evidence_processing', label: 'Processing', icon: Loader, to: '/evidence' },
+  { key: 'entities', label: 'Entities', icon: UserRoundSearch, to: '/entities' },
+  { key: 'events', label: 'Events', icon: Activity, to: '/events' },
+  { key: 'correlations', label: 'Relationships', icon: Waypoints, to: '/correlations' },
+  { key: 'requires_review', label: 'To review', icon: ScanSearch, to: '/correlations', tone: 'warning' },
   { key: 'open_tasks', label: 'Open tasks', icon: ListChecks, to: '/tasks' },
 ]
 
+/** One instrument strip, not eight cards (plan §46): label, number, a link to the records. */
 export function MetricTiles({ metrics }: { metrics: Record<string, number> }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      {METRICS.map((m) => (
-        <Link key={m.key} to={m.to}
-          className="group rounded-lg border bg-card p-3 outline-none transition-colors hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-ring">
-          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <m.icon aria-hidden className="size-3.5" /> {m.label}
-          </p>
-          <p className={cn('mt-1 text-2xl font-semibold tabular-nums', m.tone === 'warning' && (metrics[m.key] ?? 0) > 0 && 'text-warning')}>
-            {(metrics[m.key] ?? 0).toLocaleString()}
-          </p>
-        </Link>
-      ))}
+    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-4 xl:grid-cols-8">
+      {METRICS.map((m) => {
+        const value = metrics[m.key] ?? 0
+        const warn = m.tone === 'warning' && value > 0
+        return (
+          <Link key={m.key} to={m.to}
+            className="group relative bg-card px-3 py-2.5 outline-none transition-colors hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset">
+            <p className="flex items-center gap-1.5 truncate text-[0.7rem] text-muted-foreground">
+              <m.icon aria-hidden className="size-3.5 shrink-0" /> {m.label}
+            </p>
+            <p className={cn('mt-0.5 text-xl font-semibold tabular-nums', warn && 'text-warning')}>
+              {value.toLocaleString()}
+            </p>
+            <span aria-hidden className={cn('absolute inset-x-0 bottom-0 h-0.5 scale-x-0 transition-transform group-hover:scale-x-100', warn ? 'bg-warning' : 'bg-primary')} />
+          </Link>
+        )
+      })}
     </div>
   )
 }
@@ -164,7 +170,7 @@ export function MyTasks({ items }: { items: Data['my_tasks'] }) {
             <span className="font-mono text-xs text-muted-foreground">{t.reference} · {t.investigation_reference}</span>
             <span className="block truncate">{t.title}</span>
           </Link>
-          <span className="text-xs text-muted-foreground">{t.status.replace('_', ' ')}{t.due_date ? ` · due ${t.due_date}` : ''}</span>
+          <span className="text-xs text-muted-foreground">{t.status.replace('_', ' ')}{t.due_date ? ` · due ${formatDay(t.due_date)}` : ''}</span>
         </li>
       ))}
     </ul>

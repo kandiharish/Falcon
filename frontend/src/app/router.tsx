@@ -151,12 +151,17 @@ export const router = createBrowserRouter([
             path: 'account/security',
             lazy: async () => ({ Component: (await import('@/features/account/SecurityPage')).SecurityPage }),
           },
-          {
-            path: 'design-system',
-            lazy: async () => ({
-              Component: (await import('@/features/design-system/DesignSystemPage')).DesignSystemPage,
-            }),
-          },
+          // A developer tool: production builds leave it out (it falls through to "not found").
+          ...(import.meta.env.DEV
+            ? [
+                {
+                  path: 'design-system',
+                  lazy: async () => ({
+                    Component: (await import('@/features/design-system/DesignSystemPage')).DesignSystemPage,
+                  }),
+                },
+              ]
+            : []),
           {
             path: '*',
             lazy: async () => ({

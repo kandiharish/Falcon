@@ -271,7 +271,7 @@ def _alerts(db: Session, cases: Any, today: date) -> list[dict[str, str]]:
         alerts.append(
             {
                 "tone": "warning",
-                "title": f"{t.reference} overdue since {t.due_date.isoformat()}: {t.title}",
+                "title": f"{t.reference} overdue since {t.due_date.day} {t.due_date:%b}: {t.title}",
                 "link": f"/tasks?case={t.investigation.reference}&task={t.reference}",
             }
         )

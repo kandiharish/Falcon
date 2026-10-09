@@ -32,3 +32,9 @@ export function timeAgo(iso: string, now: number = Date.now()): string {
   const days = Math.round(hours / 24)
   return days === 1 ? 'yesterday' : `${days} days ago`
 }
+
+/** A calendar date "2026-10-11" (no time, no zone) → "11 Oct 2026". */
+export function formatDay(isoDate: string): string {
+  const [y, m, d] = isoDate.split('-').map(Number)
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+}

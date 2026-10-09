@@ -7,7 +7,7 @@ demo also gets the audit entries and notifications a real team would see.
 """
 
 import sys
-from datetime import date
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 
@@ -18,6 +18,7 @@ from app.services import task_service
 from app.services.request_context import RequestContext
 
 CASE = "CASE-2026-001"
+# Due dates are days from the reset, so a demo never looks stale: one task is overdue.
 TASKS = [
     {
         "title": "Verify the CCTV-001 camera clock against GPS-001 time",
@@ -27,7 +28,7 @@ TASKS = [
         "assignee": "a.kumar@falcon.example",
         "priority": "high",
         "status": "in_progress",
-        "due": date(2026, 10, 4),
+        "due_in_days": 2,
         "evidence": ["CCTV-001", "GPS-001"],
     },
     {
@@ -38,7 +39,7 @@ TASKS = [
         "assignee": "a.kumar@falcon.example",
         "priority": "high",
         "status": "review",
-        "due": date(2026, 10, 3),
+        "due_in_days": 1,
         "evidence": ["CCTV-001", "VEH-001"],
     },
     {
@@ -49,7 +50,7 @@ TASKS = [
         "assignee": "r.varma@falcon.example",
         "priority": "medium",
         "status": "todo",
-        "due": date(2026, 10, 6),
+        "due_in_days": 5,
         "evidence": ["CALL-001"],
     },
     {
@@ -60,7 +61,7 @@ TASKS = [
         "assignee": "m.das@falcon.example",
         "priority": "low",
         "status": "todo",
-        "due": date(2026, 10, 1),
+        "due_in_days": -1,
         "evidence": ["WIT-001"],
     },
     {
@@ -69,7 +70,7 @@ TASKS = [
         "assignee": "m.das@falcon.example",
         "priority": "medium",
         "status": "completed",
-        "due": date(2026, 9, 30),
+        "due_in_days": -3,
         "evidence": ["IMG-001"],
     },
 ]
@@ -88,6 +89,7 @@ def main() -> int:
         if db.scalar(select(Task).where(Task.investigation_id == case.id)):
             print("Demo tasks already exist; skipped.")
             return 0
+        today = datetime.now(UTC).date()
         lead = db.get(User, case.lead_investigator_id)
         people = {u.email: u for u in db.scalars(select(User))}
         for spec in TASKS:
@@ -101,7 +103,7 @@ def main() -> int:
                     priority=spec["priority"],
                     status=spec["status"],
                     assignee_id=people[spec["assignee"]].id,
-                    due_date=spec["due"],
+                    due_date=today + timedelta(days=spec["due_in_days"]),
                     evidence_references=spec["evidence"],
                 ),
                 context,

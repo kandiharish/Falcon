@@ -158,9 +158,9 @@ function runLayout(instance: Core) {
       animationDuration: 400,
       randomize: true,
       padding: 40,
-      nodeRepulsion: () => 9000,
-      idealEdgeLength: () => 110,
-      nodeSeparation: 90,
+            nodeRepulsion: () => 8500,
+      idealEdgeLength: () => 100,
+      nodeSeparation: 85,
     } as cytoscape.LayoutOptions)
     .run()
 }
@@ -176,8 +176,9 @@ function toElements(nodes: GraphNode[], edges: GraphEdge[]): ElementDefinition[]
         kind: n.kind,
         type: n.type,
         review: n.reviewStatus ?? 'none',
-        label: n.kind === 'event' ? n.reference : `${n.reference}\n${shorten(n.label)}`,
-        size: n.kind === 'event' ? 18 : Math.min(46, 26 + n.degree * 2),
+        // Evidence shows only its ID (the description is in the side panel): fewer overlapping labels.
+        label: n.kind === 'entity' ? `${n.reference}\n${shorten(n.label, 18)}` : n.reference,
+        size: n.kind === 'event' ? 22 : Math.min(64, 34 + n.degree * 3),
       },
     })),
     ...edges.map((e) => ({
@@ -225,7 +226,9 @@ function stylesheet(): StylesheetJson {
         height: 'data(size)',
         label: 'data(label)',
         'font-family': 'Geist Variable, system-ui, sans-serif',
-        'font-size': 12,
+        'font-size': 13,
+        'font-weight': 500,
+        'min-zoomed-font-size': 7,
         color: fg,
         'text-wrap': 'wrap',
         'text-valign': 'bottom',

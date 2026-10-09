@@ -15,6 +15,7 @@ import { GlobalSearch } from './GlobalSearch'
 import { InvestigationContextBar } from './InvestigationContextBar'
 import { InvestigationSwitcher } from './InvestigationSwitcher'
 import { HelpMenu, NotificationsMenu, UserMenu } from './TopBarMenus'
+import { ClassificationBanner } from './ClassificationBanner'
 import { useValidCurrentInvestigation } from './useValidCurrentInvestigation'
 
 /**
@@ -40,6 +41,7 @@ export function AppShell() {
       </a>
       <AppSidebar />
       <SidebarInset>
+        <ClassificationBanner />
         <header data-print="hide" className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 px-3 backdrop-blur lg:px-4">
           <SidebarTrigger aria-label="Toggle navigation" />
           <Separator orientation="vertical" className="mr-1 h-5!" />

@@ -9,7 +9,7 @@
  * • Every event is a real <button>: Tab to it, Enter to open it.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from 'react'
-import { Maximize2, ZoomIn, ZoomOut } from 'lucide-react'
+import { Crosshair, Maximize2, ZoomIn, ZoomOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { InvestigationEvent } from '@/domain/types'
 import { eventTypeTerms } from '@/design-system/vocabulary'
@@ -47,11 +47,13 @@ export function TimelineChart({ events, lanes, laneIdsOf, timeZone, selected, on
   const timed = useMemo(() => events.filter((e) => e.occurredAt), [events])
   const bounds = useMemo(() => extent(timed), [timed])
   const dataKey = bounds ? `${bounds[0]}-${bounds[1]}` : 'empty'
-  // The view is DERIVED: the user's zoom/pan for this data set, otherwise "fit all".
-  // (New filters → new data → back to fit-all, with no effect needed.)
+  // The view is DERIVED: the user's zoom/pan for this data set, otherwise the busiest period
+  // (or everything). New filters → new data → back to the default, with no effect needed.
   const [userView, setUserView] = useState<{ dataKey: string; range: [number, number] } | null>(null)
   const fitted = bounds ? pad(bounds) : null
-  const view = userView?.dataKey === dataKey ? userView.range : fitted
+  const focus = useMemo(() => busiestPeriod(timed), [timed])
+  const initial = focus ? pad(focus) : fitted
+  const view = userView?.dataKey === dataKey ? userView.range : initial
   const [width, setWidth] = useState(800)
   const plotRef = useRef<HTMLDivElement>(null)
   const drag = useRef<{ x: number; view: [number, number] } | null>(null)
@@ -132,7 +134,10 @@ export function TimelineChart({ events, lanes, laneIdsOf, timeZone, selected, on
         <div className="flex gap-1">
           <Button variant="outline" size="icon-sm" aria-label="Zoom in" onClick={() => zoom(0.5)}><ZoomIn /></Button>
           <Button variant="outline" size="icon-sm" aria-label="Zoom out" onClick={() => zoom(2)}><ZoomOut /></Button>
-          <Button variant="outline" size="sm" onClick={() => setUserView(null)}><Maximize2 /> Fit all</Button>
+          {focus && (
+            <Button variant="outline" size="sm" onClick={() => setView(pad(focus))}><Crosshair /> Busiest period</Button>
+          )}
+          <Button variant="outline" size="sm" onClick={() => fitted && setView(fitted)}><Maximize2 /> Fit all</Button>
         </div>
       </div>
 
@@ -247,6 +252,32 @@ function extent(events: InvestigationEvent[]): [number, number] | null {
   if (events.length === 0) return null
   const times = events.flatMap((e) => [new Date(e.occurredAt!).getTime(), e.endedAt ? new Date(e.endedAt).getTime() : NaN]).filter(Number.isFinite)
   return [Math.min(...times), Math.max(...times)]
+}
+
+/**
+ * Where most of the action is. Events split into bursts wherever there is a long quiet gap
+ * (a sixth of the whole span, at least an hour). If the biggest burst holds most events but
+ * only a small part of the time — 18 events in one evening, one statement the next morning —
+ * the timeline opens on that burst. Otherwise null: show everything.
+ */
+function busiestPeriod(events: InvestigationEvent[]): [number, number] | null {
+  const times = events.map((e) => new Date(e.occurredAt!).getTime()).sort((a, b) => a - b)
+  if (times.length < 4) return null
+  const span = times[times.length - 1] - times[0]
+  const quiet = Math.max(3_600_000, span / 6)
+  let best: [number, number, number] = [times[0], times[0], 1]
+  let start = times[0]
+  let count = 1
+  for (let i = 1; i < times.length; i++) {
+    if (times[i] - times[i - 1] > quiet) {
+      start = times[i]
+      count = 0
+    }
+    count += 1
+    if (count > best[2]) best = [start, times[i], count]
+  }
+  const [from, to, inBurst] = best
+  return inBurst >= times.length * 0.6 && inBurst < times.length && to - from < span * 0.5 ? [from, to] : null
 }
 
 function pad([start, end]: [number, number]): [number, number] {

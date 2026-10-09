@@ -73,6 +73,8 @@ export function AppSidebar() {
         ))}
       </SidebarContent>
 
+      {/* The design-system gallery is a developer tool: not part of the product. */}
+      {import.meta.env.DEV && (
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -85,6 +87,7 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+      )}
       <SidebarRail />
     </Sidebar>
   )
