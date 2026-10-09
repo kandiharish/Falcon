@@ -9,10 +9,12 @@ from app.api import (
     ai,
     auth,
     correlations,
+    documents,
     evidence,
     extraction,
     graph,
     health,
+    insights,
     investigations,
     overview,
     reports,
@@ -64,6 +66,8 @@ def create_app() -> FastAPI:
     app.include_router(work.router, prefix="/api")
     app.include_router(reports.router, prefix="/api")
     app.include_router(overview.router, prefix="/api")
+    app.include_router(insights.router, prefix="/api")
+    app.include_router(documents.router, prefix="/api")
     return app
 
 
