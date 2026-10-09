@@ -37,15 +37,37 @@ CASES = [
         "updated_at": "2026-09-29T17:42:00+00:00",
     },
     {
+        "reference": "CASE-2026-005",
+        "title": "KPHB Colony Chain Snatching",
+        "case_type": "Snatching (BNS 304)",
+        "status": "active",
+        "priority": "critical",
+        "stage": "correlation",
+        "location": "KPHB Colony, Kukatpally, Hyderabad",
+        "tags": ["snatching", "two-wheeler", "cctv", "telangana"],
+        "description": (
+            "A 62-year-old woman walking home from the temple had her gold chain (3 tolas) "
+            "snatched by two men on a black motorcycle, who fled towards JNTU. Shop CCTV, a "
+            "community camera, traffic ANPR, call records, the rider's phone location and UPI "
+            "payments are under analysis. All people, numbers and the plate are fictional."
+        ),
+        "lead": "r.varma@falcon.example",
+        "members": ["a.kumar@falcon.example", "m.das@falcon.example"],
+        "created_at": "2026-10-07T15:10:00+00:00",
+        "updated_at": "2026-10-08T06:30:00+00:00",
+    },
+    {
         "reference": "CASE-2026-002",
-        "title": "Harbor Street Card Fraud",
+        "title": "Ameerpet ATM Card Skimming",
         "case_type": "Financial fraud",
         "status": "under_review",
         "priority": "medium",
         "stage": "review",
-        "location": "Harbor Street Market",
+        "location": "Ameerpet",
         "tags": ["fraud", "cards"],
-        "description": "Series of cloned-card purchases at market stalls over three weekends.",
+        "description": (
+            "Skimming device found on an ATM; cloned-card withdrawals over three weekends."
+        ),
         "lead": "k.iyer@falcon.example",
         "members": ["a.kumar@falcon.example"],
         "created_at": "2026-08-30T10:00:00+00:00",
@@ -53,15 +75,16 @@ CASES = [
     },
     {
         "reference": "CASE-2026-003",
-        "title": "Northgate Vehicle Theft Series",
+        "title": "Miyapur Two-Wheeler Theft Series",
         "case_type": "Vehicle theft",
         "status": "active",
         "priority": "critical",
         "stage": "extraction",
-        "location": "Northgate District",
+        "location": "Miyapur and Chandanagar",
         "tags": ["vehicles", "series"],
         "description": (
-            "Five vehicles taken from residential streets; plate-reader data under review."
+            "Five motorcycles taken from metro and apartment parking; "
+            "plate-reader data under review."
         ),
         "lead": "r.varma@falcon.example",
         "members": ["a.kumar@falcon.example"],
@@ -70,12 +93,12 @@ CASES = [
     },
     {
         "reference": "CASE-2026-004",
-        "title": "Office Network Data Exfiltration",
+        "title": "HITEC City Office Data Exfiltration",
         "case_type": "Cyber incident",
         "status": "draft",
         "priority": "medium",
         "stage": "intake",
-        "location": "Eastline Business Park",
+        "location": "HITEC City",
         "tags": ["cyber", "insider"],
         "description": "Unusual outbound transfers from a design firm's file server.",
         "lead": "a.menon@falcon.example",
@@ -85,12 +108,12 @@ CASES = [
     },
     {
         "reference": "CASE-2025-017",
-        "title": "Central Metro Station Assault",
+        "title": "Ameerpet Metro Station Assault",
         "case_type": "Assault",
         "status": "closed",
         "priority": "high",
         "stage": "closed",
-        "location": "Central Metro Station",
+        "location": "Ameerpet Metro Station",
         "tags": ["assault", "transit"],
         "description": "Platform altercation; closed after report submission.",
         "lead": "k.iyer@falcon.example",
@@ -149,7 +172,7 @@ def main() -> int:
             print(f"created  {case['reference']}  {case['title']}")
 
         # Keep the case-number counters ahead of the seeded numbers.
-        for year, last in ((2026, 4), (2025, 17)):
+        for year, last in ((2026, 5), (2025, 17)):
             db.execute(
                 insert(ReferenceCounter)
                 .values(year=year, last_value=last)

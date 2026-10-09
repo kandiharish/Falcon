@@ -48,6 +48,9 @@ ALIASES: dict[str, dict[str, tuple[str, ...]]] = {
         "currency": ("currency", "ccy"),
         "time": ("occurred_at", "timestamp", "transaction_time", "datetime", "date"),
         "id": ("transaction_id", "txn_id", "reference", "id"),
+        # Optional: where the payee is (UPI and card statements often include it).
+        "lat": ("latitude", "lat", "merchant_lat"),
+        "lon": ("longitude", "lon", "lng", "merchant_lon"),
     },
     "vehicle": {
         "plate": ("plate", "registration", "plate_number", "number_plate", "vrm"),
@@ -161,6 +164,9 @@ def _transactions(sink: ExtractionSink, value, when: ParsedTime | None, line: in
         description=f"{account.label if account else 'Account'} paid {money}"
         + (f" to {merchant.label}" if merchant else ""),
         participants=[(account, "payer"), (merchant, "payee")],
+        latitude=_number(value("lat")),
+        longitude=_number(value("lon")),
+        location_text=merchant.label if merchant and value("lat") else "",
         attributes={
             k: v
             for k, v in {

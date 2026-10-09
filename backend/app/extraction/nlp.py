@@ -12,6 +12,7 @@ import re
 import phonenumbers
 
 from app.core.config import get_settings
+from app.extraction.gazetteer import PLACE_LABEL, ruler_patterns
 from app.extraction.sink import ExtractionSink, Provenance
 
 MAX_CHARS = 200_000
@@ -30,6 +31,7 @@ SPACY_TYPES = {
     "GPE": ("location", 0.5),
     "LOC": ("location", 0.5),
     "FAC": ("location", 0.45),
+    PLACE_LABEL: ("location", 0.7),  # from the local gazetteer, not a guess
 }
 SPACY_MODEL = "en_core_web_sm"
 # Small words allowed in lower case inside names ("Bank of India", "van der Berg").
@@ -90,7 +92,11 @@ def _model():
         import spacy
 
         # Only the named-entity recogniser is needed: disabling the rest makes it faster.
-        _nlp = spacy.load(SPACY_MODEL, disable=["lemmatizer", "attribute_ruler"])
+        nlp = spacy.load(SPACY_MODEL, disable=["lemmatizer", "attribute_ruler"])
+        # Known places and law codes win over the model's guesses (see gazetteer.py).
+        ruler = nlp.add_pipe("entity_ruler", before="ner", config={"phrase_matcher_attr": "LOWER"})
+        ruler.add_patterns(ruler_patterns())
+        _nlp = nlp
     return _nlp
 
 

@@ -20,6 +20,7 @@ from app.core.config import REPO_ROOT, get_settings
 from app.scripts import (
     seed_demo_evidence,
     seed_demo_investigations,
+    seed_demo_kphb,
     seed_demo_users,
     seed_demo_work,
 )
@@ -47,7 +48,14 @@ def main() -> int:
         print(f"Clearing {storage}…")
         shutil.rmtree(storage, onexc=_make_writable)
 
-    for seed in (seed_demo_users, seed_demo_investigations, seed_demo_evidence, seed_demo_work):
+    seeds = (
+        seed_demo_users,
+        seed_demo_investigations,
+        seed_demo_evidence,
+        seed_demo_kphb,
+        seed_demo_work,
+    )
+    for seed in seeds:
         if seed.main() != 0:
             return 1
     print("Done. The worker will process the demo evidence within a few seconds.")
