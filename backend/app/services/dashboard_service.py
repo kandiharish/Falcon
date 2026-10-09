@@ -59,14 +59,13 @@ def visible_case_ids(db: Session, user: User) -> Select[tuple[uuid.UUID]]:
 def build(db: Session, user: User) -> Dashboard:
     cases = visible_case_ids(db, user)
 
-    def count(model, *conditions) -> int:
+    # Every tile is a scalar subquery of ONE select: one database round trip, not eleven.
+    def count(model, *conditions):
         return (
-            db.scalar(
-                select(func.count())
-                .select_from(model)
-                .where(model.investigation_id.in_(cases), *conditions)
-            )
-            or 0
+            select(func.count())
+            .select_from(model)
+            .where(model.investigation_id.in_(cases), *conditions)
+            .scalar_subquery()
         )
 
     def grouped(column, model, *conditions) -> dict[str, int]:
@@ -78,16 +77,14 @@ def build(db: Session, user: User) -> Dashboard:
         return {str(k): n for k, n in sorted(rows, key=lambda r: -r[1])}
 
     processing = (
-        db.scalar(
-            select(func.count())
-            .select_from(ProcessingJob)
-            .join(Evidence, ProcessingJob.evidence_id == Evidence.id)
-            .where(
-                Evidence.investigation_id.in_(cases),
-                ProcessingJob.status.in_(("queued", "running")),
-            )
+        select(func.count())
+        .select_from(ProcessingJob)
+        .join(Evidence, ProcessingJob.evidence_id == Evidence.id)
+        .where(
+            Evidence.investigation_id.in_(cases),
+            ProcessingJob.status.in_(("queued", "running")),
         )
-        or 0
+        .scalar_subquery()
     )
     pending = (
         count(Entity, Entity.review_status == "pending")
@@ -95,13 +92,10 @@ def build(db: Session, user: User) -> Dashboard:
         + count(Correlation, Correlation.review_status == "pending", Correlation.stale.is_(False))
         + count(Evidence, Evidence.status == "requires_review")
     )
-    metrics = {
-        "active_investigations": db.scalar(
-            select(func.count()).where(
-                Investigation.id.in_(cases), Investigation.status == "active"
-            )
-        )
-        or 0,
+    tiles = {
+        "active_investigations": select(func.count())
+        .where(Investigation.id.in_(cases), Investigation.status == "active")
+        .scalar_subquery(),
         "evidence_items": count(Evidence),
         "evidence_processing": processing,
         "entities": count(Entity, Entity.review_status != "rejected"),
@@ -112,6 +106,8 @@ def build(db: Session, user: User) -> Dashboard:
         "requires_review": pending,
         "open_tasks": count(Task, Task.status != "completed"),
     }
+    row = db.execute(select(*(value.label(name) for name, value in tiles.items()))).one()
+    metrics = {name: row._mapping[name] or 0 for name in tiles}
 
     today = datetime.now(UTC).date()
     since = today - timedelta(days=ACTIVITY_DAYS - 1)
